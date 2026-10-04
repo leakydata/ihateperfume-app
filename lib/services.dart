@@ -468,8 +468,6 @@ String cleanOcr(String raw) {
 
 const ihpApi = 'https://ihateperfume.com/wp-json/ihp-app/v1';
 
-/// The User-Agent every request from the app carries (no device or user details).
-String get appUserAgent => _userAgent;
 
 /// What we recorded when we reviewed a product: what the package says about scent, when, and from what.
 class IhpInfo {
