@@ -123,6 +123,11 @@ class Decoder {
 
   Category cat(String c) => cats[c] ?? Category(c, c, '', 1);
 
+  /// For ingredient search: flagged names as written, EU allergen names, and every known (normalized) name.
+  Iterable<String> get flaggedNames => _items.map((i) => i['n'] as String);
+  Iterable<String> get allergenNames => _allergens.map((a) => a.name);
+  Set<String> get vocab => _vocabSet;
+
   // ---------- part 1: fragrance (decoder.js) ----------
 
   static final _fragranceWords = <(RegExp, String)>[

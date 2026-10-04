@@ -1,121 +1,153 @@
+// I Hate Perfume. Based on the I Hate Perfume app by ihateperfume.com (https://ihateperfume.com).
+// GPL-3.0 with the additional terms in ADDITIONAL-TERMS.md.
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'screens/about.dart';
+import 'screens/home.dart';
+import 'screens/search.dart';
+import 'services.dart';
+import 'theme.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  LicenseRegistry.addLicense(() async* {
+    for (final (pkg, file) in [('Archivo', 'LICENSE-Archivo.txt'), ('IBM Plex Mono', 'LICENSE-IBM-Plex-Mono.txt')]) {
+      yield LicenseEntryWithLineBreaks([pkg], await rootBundle.loadString('assets/fonts/$file'));
+    }
+  });
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  runApp(const App());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
+class App extends StatefulWidget {
+  const App({super.key});
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
+  State<App> createState() => _AppState();
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class _AppState extends State<App> {
+  late final Future<void> _ready = Future.wait([
+    loadDecoder(),
+    Future.delayed(const Duration(milliseconds: 600)), // let the splash be read, not flash
+  ]);
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+  Widget build(BuildContext context) => MaterialApp(
+        title: 'I Hate Perfume',
+        debugShowCheckedModeBanner: false,
+        theme: appTheme(),
+        home: FutureBuilder(
+          future: _ready,
+          builder: (context, snap) {
+            if (snap.hasError) return Splash(error: '${snap.error}');
+            if (snap.connectionState != ConnectionState.done) return const Splash();
+            return const Shell();
+          },
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+      );
+}
+
+class Splash extends StatelessWidget {
+  final String? error;
+  const Splash({super.key, this.error});
+  @override
+  Widget build(BuildContext context) => AnnotatedRegion(
+        value: SystemUiOverlayStyle.light,
+        child: Scaffold(
+          backgroundColor: C.ink,
+          body: SafeArea(
+            child: Stack(children: [
+              Center(
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  const Big('I Hate\nPerfume', size: 64, color: C.paper, align: TextAlign.center),
+                  const SizedBox(height: 14),
+                  const Mono('Scan it. Unmask it.', color: C.signalLight),
+                  if (error != null)
+                    Padding(padding: const EdgeInsets.all(24), child: Text(error!, style: T.src(color: C.signalLight))),
+                ]),
+              ),
+              const Positioned(
+                left: 0,
+                right: 0,
+                bottom: 34,
+                child: Mono('No account. No ads. No tracking.', size: 11, color: Color(0xFF888888), align: TextAlign.center),
+              ),
+            ]),
+          ),
+        ),
+      );
+}
+
+/// Bottom tabs: Scan, Search, Learn.
+class Shell extends StatefulWidget {
+  const Shell({super.key});
+  static final tab = ValueNotifier(0);
+  static final searchFocus = FocusNode();
+  @override
+  State<Shell> createState() => _ShellState();
+}
+
+class _ShellState extends State<Shell> {
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder(
+        valueListenable: Shell.tab,
+        builder: (context, i, _) => PopScope(
+          canPop: i == 0,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) Shell.tab.value = 0;
+          },
+          child: AnnotatedRegion(
+            value: SystemUiOverlayStyle.dark,
+            child: Scaffold(
+              body: SafeArea(
+                bottom: false,
+                child: IndexedStack(index: i, children: const [HomeScreen(), SearchScreen(), AboutScreen()]),
+              ),
+              bottomNavigationBar: _Tabs(i),
+            ),
+          ),
+        ),
+      );
+}
+
+class _Tabs extends StatelessWidget {
+  final int on;
+  const _Tabs(this.on);
+  @override
+  Widget build(BuildContext context) {
+    const items = [
+      (Icons.crop_free, 'Scan'),
+      (Icons.search, 'Search'),
+      (Icons.menu_book_outlined, 'Learn'),
+    ];
+    return Container(
+      decoration: const BoxDecoration(color: C.paper, border: Border(top: BorderSide(color: C.ink, width: 3))),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 60,
+          child: Row(children: [
+            for (var i = 0; i < items.length; i++)
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    Shell.tab.value = i;
+                    if (i == 1) Shell.searchFocus.requestFocus();
+                  },
+                  child: Semantics(
+                    selected: on == i,
+                    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(items[i].$1, size: 26, color: on == i ? C.signal : C.ink),
+                      const SizedBox(height: 4),
+                      Mono(items[i].$2, size: 10, color: on == i ? C.signal : C.ink),
+                    ]),
+                  ),
+                ),
+              ),
+          ]),
+        ),
       ),
     );
   }

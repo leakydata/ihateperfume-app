@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App icon from design/mockups.html: red scan brackets and a crossed-out bottle. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <group android:translateX="2.142699999999998" android:translateY="2.142699999999998" android:scaleX="0.47143" android:scaleY="0.47143">
+        <path android:strokeColor="#C4361B" android:strokeWidth="10" android:strokeLineCap="square"
+            android:pathData="M40,72V40h32M148,40h32v32M180,148v32h-32M72,180H40v-32"/>
+        <path android:fillColor="#FFFFFF"
+            android:pathData="M100,62h20a2,2 0,0 1,2 2v10a2,2 0,0 1,-2 2h-20a2,2 0,0 1,-2 -2v-10a2,2 0,0 1,2 -2zM104,54h12v10h-12zM78,92Q78,80 92,80H128Q142,80 142,92V150Q142,162 128,162H92Q78,162 78,150Z"/>
+        <path android:strokeColor="#C4361B" android:strokeWidth="12" android:strokeLineCap="round"
+            android:pathData="M62,168L158,56"/>
+    </group>
+</vector>
