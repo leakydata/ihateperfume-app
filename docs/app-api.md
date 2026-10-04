@@ -104,3 +104,23 @@ older-than-180-days barcodes leave the list.
 - **Send to Open Beauty Facts** on approved products: posts the factual fields (barcode, product name, brand,
   ingredient list) to Open Beauty Facts' write API under the project's account. Disabled until
   `IHP_APP_OBF_USER` / `IHP_APP_OBF_PASSWORD` are set in wp-config.php. Never sends user photos.
+
+## Our reviewed products come first (checked on the phone)
+`GET /data` gains `"products": {"url": "…/products.json", "sha256": "…", "bytes": N}`. `GET /products.json` returns
+`{"updated": "…", "items": [<same objects as GET /products/{barcode}>]}` for every approved product with a barcode,
+compact JSON, cacheable 1 hour. The app downloads it with its data update (only when the sha256 changes) and checks
+it **on the phone first**, before Open Beauty Facts, Open Products Facts, and openFDA, so a reviewed product never
+sends its barcode anywhere. `GET /products/{barcode}` stays as the last fallback (products approved since the
+phone's last update).
+
+## `POST /reports` ("Wrong or missing ingredients? Report it")
+Sent only when the user taps "Just report" in the report sheet. `application/x-www-form-urlencoded`: `barcode`
+(8–14 digits), `source` (`obf` | `opf` | `fda` | `ihp`), `reason` (`not_ingredients` | `wrong_product` |
+`missing` | `other`), `app`. Nothing else. `202 {"ok": true}`, `400`, `429` (50 per IP hash per day; same daily-salted
+HMAC; IPs never stored). Server keeps per (barcode, source): counts per reason, first and last date. Saving our own
+product for that barcode clears its reports. The sheet's other choice, "Add photos (fastest fix)", opens the normal
+"Add it" flow with the barcode filled in.
+
+Admin: a **Reports** tab grouped by barcode and source, most reported first: reasons with counts, dates, a link to the
+entry at its source (Open Beauty Facts / Open Products Facts product page, or the openFDA query), "Add the correct
+list" (pre-filled product form), "Check Walmart's photos", and "Dismiss".
