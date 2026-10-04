@@ -41,9 +41,13 @@ class AboutScreen extends StatelessWidget {
           for (final t in const [
             'No account, no ads, no tracking. Free.',
             'Barcode reading, text recognition, and ingredient matching run on this phone.',
-            'Your photos never leave the phone. They’re deleted as soon as the text is read.',
-            'Only a scanned barcode number is sent, to Open Beauty Facts, then Open Products Facts, then the FDA’s '
-                'openFDA service, to find the product. Nothing else goes anywhere.',
+            'Your photos stay on the phone and are deleted as soon as the text is read, unless you choose to send '
+                'us a product.',
+            'To find a product, only its barcode number is sent: to Open Beauty Facts, Open Products Facts, the FDA’s '
+                'openFDA service, and ihateperfume.com. No account, location, or device ID.',
+            'The app downloads ingredient updates and the finds list from ihateperfume.com. Nothing about you is sent.',
+            'Only if you choose: products you send us (location and photo details removed first), and barcodes you '
+                'ask us to find.',
             'Recent scans are stored only on this phone and left out of phone backups.',
             'We never say a product is “safe.” Not on a list doesn’t mean safe; it may never have been assessed.',
           ])

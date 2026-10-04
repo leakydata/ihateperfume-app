@@ -169,6 +169,18 @@ const privacyDoc = LegalDoc('Privacy policy', _updated, [
         'app and on ihateperfume.com. To stop abuse, our server limits how many products can be sent each day. It '
         'does this with a scrambled code made from your IP address that changes every day and is deleted after 48 '
         'hours. We never store your IP address.'),
+    Li('Missing barcodes. Only if you choose. When a barcode isn’t found, you can tap “Ask us to find it,” or choose '
+        '“Send missing barcodes automatically.” Then the app sends just that barcode number to ihateperfume.com. We '
+        'keep the number, how many people asked for it, and the dates, so we can look for the product. You can change '
+        'this choice in Learn at any time. The barcodes you asked about are also kept in a private list on your '
+        'phone. About once a day the app checks ihateperfume.com for them, sending only those numbers, so it can tell '
+        'you when we’ve added one.'),
+    Li('How we look products up. To check a product, we may look its barcode up on a retailer’s website, such as '
+        'Walmart’s. Our server does this, never your phone, and nothing about you is sent. We don’t keep the '
+        'retailer’s photos or descriptions.'),
+    Li('Sharing with Open Beauty Facts. We may share the details of approved products (barcode, name, brand, and '
+        'ingredient list, never photos) with Open Beauty Facts, a free open database, so that other apps and people '
+        'can use them too.'),
     Li('Maker links. After a barcode scan, the app shows a link to the maker’s own ingredient page (for P&G '
         'products) or to SmartLabel’s product search (smartlabel.org, run by the Consumer Brands Association). '
         'Opening it sends the barcode to that website, and only when you tap the link. The app never contacts '
