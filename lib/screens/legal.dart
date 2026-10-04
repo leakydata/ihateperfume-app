@@ -153,9 +153,10 @@ const privacyDoc = LegalDoc('Privacy policy', _updated, [
         'barcode number is sent. The request names the app in the same way for everyone; it carries no account, '
         'device ID, or location. Like any website, these services see your IP address and may keep logs. Their '
         'privacy policies explain what they keep.'),
-    Li('Maker links. For some brands, the app shows a link to the maker’s own ingredient page. Opening it sends '
-        'the barcode to that company’s website, and only when you tap the link. The app never contacts the maker '
-        'on its own.'),
+    Li('Maker links. After a barcode scan, the app shows a link to the maker’s own ingredient page (for P&G '
+        'products) or to SmartLabel’s product search (smartlabel.org, run by the Consumer Brands Association). '
+        'Opening it sends the barcode to that website, and only when you tap the link. The app never contacts '
+        'them on its own.'),
     Li('Links. Links to ihateperfume.com, EWG, and official sources open in your browser only when you tap them. '
         'From then on, that website’s privacy policy applies.'),
     Li('Sharing. If you tap Share on a result, Android’s share sheet opens and you choose where the text goes. '

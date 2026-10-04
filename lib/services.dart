@@ -317,12 +317,16 @@ List<String> fdaActives(String active, String purpose) {
 /// Crest (0030772), Gillette (0047400), Olay (0075609), Pantene (0080878), and Vicks (0323900).
 const _pgPrefixes = ['0037000', '0012044', '0030772', '0047400', '0075609', '0080878', '0323900'];
 
-/// P&G's SmartLabel page for a P&G barcode, where P&G lists the product's ingredients. Opened in the browser only
-/// when the user taps; the app never fetches it (P&G's terms forbid scraping). Null for other makers.
-String? makerPage(String barcode) {
+/// Where to read the maker's own ingredient list, opened in the browser only when the user taps; the app never
+/// fetches it (the SmartLabel and P&G terms forbid scraping). P&G barcodes go straight to P&G's SmartLabel page;
+/// other barcodes to SmartLabel's product search, which covers many brands (no result if the maker isn't in it).
+(String, String)? makerPage(String barcode) {
   final g13 = fdaUpc(barcode);
-  if (g13 == null || !_pgPrefixes.any(g13.startsWith)) return null;
-  return 'https://smartlabel.pg.com/en-us/0$g13.html';
+  if (g13 == null) return null;
+  if (_pgPrefixes.any(g13.startsWith)) {
+    return ('https://smartlabel.pg.com/en-us/0$g13.html', 'See the maker’s ingredient page');
+  }
+  return ('https://smartlabel.org/product-search/?product=$barcode', 'Search SmartLabel for this barcode');
 }
 
 /// Tidy text read from a photo of a label: start at "Ingredients:", and join lines broken mid-ingredient.

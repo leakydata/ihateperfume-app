@@ -14,7 +14,7 @@ I Hate Perfume is a free app from ihateperfume.com. It has no account, no ads, n
 ## What leaves your phone
 
 - Barcode numbers. When you scan or type a barcode, the app sends that number to Open Beauty Facts (world.openbeautyfacts.org); if it finds no ingredient list there, to Open Products Facts (world.openproductsfacts.org); and if it still finds none, to the U.S. Food and Drug Administration’s openFDA service (api.fda.gov), which has the labels of over-the-counter drugs such as sunscreen. Only the barcode number is sent. The request names the app in the same way for everyone; it carries no account, device ID, or location. Like any website, these services see your IP address and may keep logs. Their privacy policies explain what they keep.
-- Maker links. For some brands, the app shows a link to the maker’s own ingredient page. Opening it sends the barcode to that company’s website, and only when you tap the link. The app never contacts the maker on its own.
+- Maker links. After a barcode scan, the app shows a link to the maker’s own ingredient page (for P&G products) or to SmartLabel’s product search (smartlabel.org, run by the Consumer Brands Association). Opening it sends the barcode to that website, and only when you tap the link. The app never contacts them on its own.
 - Links. Links to ihateperfume.com, EWG, and official sources open in your browser only when you tap them. From then on, that website’s privacy policy applies.
 - Sharing. If you tap Share on a result, Android’s share sheet opens and you choose where the text goes. Nothing is shared unless you choose it.
 

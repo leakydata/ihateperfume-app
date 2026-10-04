@@ -122,11 +122,14 @@ void main() {
   });
 
   test('maker links for P&G barcodes only', () {
-    expect(makerPage('012044038918'), 'https://smartlabel.pg.com/en-us/00012044038918.html'); // Old Spice
-    expect(makerPage('037000814252'), 'https://smartlabel.pg.com/en-us/00037000814252.html'); // Secret
-    expect(makerPage('0030772094006'), 'https://smartlabel.pg.com/en-us/00030772094006.html'); // Dawn
-    expect(makerPage('079400017437'), isNull); // Degree (Unilever)
-    expect(makerPage('3606000604520'), isNull);
+    expect(makerPage('012044038918')?.$1, 'https://smartlabel.pg.com/en-us/00012044038918.html'); // Old Spice
+    expect(makerPage('037000814252')?.$1, 'https://smartlabel.pg.com/en-us/00037000814252.html'); // Secret
+    expect(makerPage('0030772094006')?.$1, 'https://smartlabel.pg.com/en-us/00030772094006.html'); // Dawn
+    expect(makerPage('012044038918')?.$2, 'See the maker’s ingredient page');
+    // Other makers: SmartLabel's product search for the barcode as scanned (verified: it finds products by UPC).
+    expect(makerPage('079400017437'),
+        ('https://smartlabel.org/product-search/?product=079400017437', 'Search SmartLabel for this barcode'));
+    expect(makerPage('3606000604520')?.$1, 'https://smartlabel.org/product-search/?product=3606000604520');
     expect(makerPage('12345678'), isNull);
   });
 }

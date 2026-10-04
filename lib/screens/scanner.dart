@@ -34,7 +34,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
   late ScanMode _mode = widget.mode;
   String? _busy; // message while looking up or reading
   String? _notice; // e.g. "not found, photograph the list"
-  String? _maker; // the maker's ingredient page for the barcode in the notice, opened only on tap
+  (String, String)? _maker; // the maker's ingredient page for the barcode in the notice, opened only on tap
   String? _barcode; // carried into the photo step when a barcode had no ingredient list
   String? _name;
   bool _torch = false;
@@ -416,10 +416,10 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                 Text(_notice!, style: T.lede.copyWith(fontSize: 14)),
                 if (_maker != null)
                   InkWell(
-                    onTap: () => openLink(context, _maker!),
-                    child: const Padding(
-                      padding: EdgeInsets.only(top: 8, bottom: 2),
-                      child: MonoLink('See the maker’s ingredient page', size: 11),
+                    onTap: () => openLink(context, _maker!.$1),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 2),
+                      child: MonoLink(_maker!.$2, size: 11),
                     ),
                   ),
               ]),

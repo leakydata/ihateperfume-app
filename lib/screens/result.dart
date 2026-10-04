@@ -202,10 +202,10 @@ class _ResultScreenState extends State<ResultScreen> {
                     ),
                   if (maker != null)
                     InkWell(
-                      onTap: () => openLink(context, maker),
-                      child: const Padding(
-                          padding: EdgeInsets.only(top: 10),
-                          child: MonoLink('See the maker’s ingredient page')),
+                      onTap: () => openLink(context, maker.$1),
+                      child: Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: MonoLink(maker.$2)),
                     ),
                   InkWell(
                     onTap: () => Navigator.of(context).push(MaterialPageRoute(
