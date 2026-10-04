@@ -45,9 +45,10 @@ class AboutScreen extends StatelessWidget {
                 'us a product.',
             'To find a product, only its barcode number is sent: to Open Beauty Facts, Open Products Facts, the FDA’s '
                 'openFDA service, and ihateperfume.com. No account, location, or device ID.',
-            'The app downloads ingredient updates and the finds list from ihateperfume.com. Nothing about you is sent.',
-            'Only if you choose: products you send us (location and photo details removed first), and barcodes you '
-                'ask us to find.',
+            'The app downloads ingredient updates, our list of reviewed products, and the finds list from '
+                'ihateperfume.com. Nothing about you is sent.',
+            'Only if you choose: products you send us (location and photo details removed first), barcodes you ask us '
+                'to find, and lists you report.',
             'Recent scans are stored only on this phone and left out of phone backups.',
             'We never say a product is “safe.” Not on a list doesn’t mean safe; it may never have been assessed.',
           ])

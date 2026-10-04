@@ -147,7 +147,8 @@ const privacyDoc = LegalDoc('Privacy policy', _updated, [
         'send us a product.'),
   ]),
   LegalSection('What leaves your phone', [
-    Li('Barcode numbers. When you scan or type a barcode, the app sends that number to Open Beauty Facts '
+    Li('Barcode numbers. If we’ve already reviewed the product, the app finds it in our list on your phone and sends '
+        'nothing. Otherwise, when you scan or type a barcode, the app sends that number to Open Beauty Facts '
         '(world.openbeautyfacts.org); if it finds no ingredient list there, to Open Products Facts '
         '(world.openproductsfacts.org); and if it still finds none, to the U.S. Food and Drug Administration’s '
         'openFDA service (api.fda.gov), which has the labels of over-the-counter drugs such as sunscreen; and if it '
@@ -156,7 +157,7 @@ const privacyDoc = LegalDoc('Privacy policy', _updated, [
         'account, device ID, or location. Like any website, these services see your IP address and may keep logs. Their '
         'privacy policies explain what they keep.'),
     Li('Ingredient data updates. About once a day, the app asks ihateperfume.com whether there is newer ingredient '
-        'data, and downloads it if there is. The request carries nothing about you: no account, device ID, or '
+        'data or a newer list of the products we’ve reviewed, and downloads it if there is. The request carries nothing about you: no account, device ID, or '
         'location.'),
     Li('Fragrance-free finds. When you open the Finds tab, or pull to refresh it, the app downloads the list from '
         'ihateperfume.com. Nothing about you is sent.'),
@@ -181,6 +182,9 @@ const privacyDoc = LegalDoc('Privacy policy', _updated, [
     Li('Sharing with Open Beauty Facts. We may share the details of approved products (barcode, name, brand, and '
         'ingredient list, never photos) with Open Beauty Facts, a free open database, so that other apps and people '
         'can use them too.'),
+    Li('Reports. Only if you tap “Just report.” The app sends the barcode, where its ingredient list came from, and '
+        'the reason you picked. Nothing else: no text you type, no account, and no location. We delete a report once '
+        'we’ve handled it, and we limit how many can be sent each day the same way we do for products you send us.'),
     Li('Maker links. After a barcode scan, the app shows a link to the maker’s own ingredient page (for P&G '
         'products) or to SmartLabel’s product search (smartlabel.org, run by the Consumer Brands Association). '
         'Opening it sends the barcode to that website, and only when you tap the link. The app never contacts '
