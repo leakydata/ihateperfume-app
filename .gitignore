@@ -7,3 +7,4 @@ android/key.properties
 *.jks
 *.keystore
 local.properties
+.claude/worktrees/
