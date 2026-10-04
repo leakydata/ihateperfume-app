@@ -128,6 +128,12 @@ class Decoder {
   Iterable<String> get allergenNames => _allergens.map((a) => a.name);
   Set<String> get vocab => _vocabSet;
 
+  /// Normalized names and synonyms of flagged ingredients (read only, for spelling suggestions).
+  Iterable<String> get knownNames => _names.keys;
+
+  /// Which flagged ingredient a normalized name or synonym belongs to, if any.
+  int? itemIndex(String normalized) => _names[normalized];
+
   // ---------- part 1: fragrance (decoder.js) ----------
 
   static final _fragranceWords = <(RegExp, String)>[

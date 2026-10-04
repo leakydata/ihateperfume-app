@@ -1,0 +1,137 @@
+// Spelling suggestions for misread ingredient lists: fix real text recognition mistakes, leave real names alone.
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:ihateperfume/engine/decoder.dart';
+import 'package:ihateperfume/engine/ocr_fix.dart';
+import 'package:ihateperfume/screens/review.dart';
+import 'package:ihateperfume/services.dart';
+
+void main() {
+  final decoder = Decoder.fromJson(File('assets/data/decoder.json').readAsStringSync(),
+      File('assets/data/decoder-data.json').readAsStringSync(), File('assets/data/inci-vocab.json').readAsStringSync());
+  final fix = OcrFix(decoder);
+
+  /// item as written -> suggested replacement, for every suggestion in [text].
+  Map<String, String> sug(String text) => {for (final s in fix.suggest(text)) s.from: s.to};
+
+  test('item spans match Decoder.split', () {
+    final cases = (jsonDecode(File('test/parity/cases.json').readAsStringSync()) as List).cast<String>();
+    for (final t in [
+      ...cases,
+      'INGREDIENTS: Aqua; Glycerin.\n• Parfum*, , Limonene. ',
+      '  inci : Water | Alcohol Denat.**  ',
+    ]) {
+      expect([for (final (s, e) in OcrFix.spans(t)) t.substring(s, e)], Decoder.split(t), reason: t);
+    }
+  });
+
+  test('common text recognition mistakes get the real name', () {
+    expect(sug('Water, Lim0nene, Methylparabn, Citric Acid, Sodium Laureth Sulfale, Parfurn'), {
+      'Lim0nene': 'Limonene',
+      'Methylparabn': 'Methylparaben',
+      'Sodium Laureth Sulfale': 'Sodium Laureth Sulfate',
+      'Parfurn': 'Parfum',
+    });
+    expect(
+        sug('Cetearyl Alcohoi, Xanthan Gurn, Panthenoi, Sodiurn Benzoate, Benzyl Alc0hol, Cocamidopropyl Betain'), {
+      'Cetearyl Alcohoi': 'Cetearyl Alcohol',
+      'Xanthan Gurn': 'Xanthan Gum',
+      'Panthenoi': 'Panthenol',
+      'Sodiurn Benzoate': 'Sodium Benzoate',
+      'Benzyl Alc0hol': 'Benzyl Alcohol',
+      'Cocamidopropyl Betain': 'Cocamidopropyl Betaine',
+    });
+  });
+
+  test('keeps the label style: caps stay caps, lowercase stays lowercase', () {
+    expect(sug('AQUA, GLYCERlN, LINAL00L, CITRONELLOL'), {'GLYCERlN': 'GLYCERIN', 'LINAL00L': 'LINALOOL'});
+    expect(sug('water, lim0nene'), {'lim0nene': 'limonene'});
+  });
+
+  test('parts in parentheses or after a slash are checked on their own', () {
+    expect(sug('Aqua (Watre), Parfum/Fragrence'), {'Watre': 'Water', 'Fragrence': 'Fragrance'});
+  });
+
+  test('a missing comma between two known names', () {
+    expect(sug('Water, Glycerin Parfum, Limonene'), {'Glycerin Parfum': 'Glycerin, Parfum'});
+  });
+
+  test('real names are never changed', () {
+    // Citric Acid, Glycerin, a real unflagged ingredient, synonyms in parentheses, numbers, and plurals.
+    expect(
+        sug('Citric Acid, Glycerin, Butyrospermum Parkii Butter, Simmondsia Chinensis Seed Oil, Aqua (Water), '
+            'Fragrance (Parfum), CI 77891, Glycerin 2%, PEG-40 Hydrogenated Castor Oil, Enzymes, Fragrance, Perfume'),
+        isEmpty);
+    // Every parity case except the one with deliberate misspellings.
+    final cases = (jsonDecode(File('test/parity/cases.json').readAsStringSync()) as List).cast<String>();
+    for (var i = 0; i < cases.length; i++) {
+      expect(sug(cases[i]).keys, i == 2 ? ['Lim0nene', 'Methylparabn'] : isEmpty, reason: cases[i]);
+    }
+  });
+
+  test('no guessing: a different number or an unknown word gets no suggestion', () {
+    expect(sug('PEG-45 Hydrogenated Castor Oil, Optical Brightener, Colorant, Zq, 1234'), isEmpty);
+  });
+
+  test('apply replaces only the item, and only if the text still matches', () {
+    const t = 'Water, Lim0nene, Parfurn';
+    final s = fix.suggest(t);
+    expect(OcrFix.apply(t, s.first), 'Water, Limonene, Parfurn');
+    expect(OcrFix.applyAll(t, s), 'Water, Limonene, Parfum');
+    expect(OcrFix.apply('Water, Lemon, Parfurn', s.first), 'Water, Lemon, Parfurn');
+    expect(decoder.decode(OcrFix.applyAll(t, s)).items, ['Water', 'Limonene', 'Parfum']);
+  });
+
+  test('weighted distance: OCR confusions are cheap, other edits cost one', () {
+    expect(OcrFix.wdist('lim0nene', 'limonene'), closeTo(.3, 1e-9));
+    expect(OcrFix.wdist('parfurn', 'parfum'), closeTo(.3, 1e-9));
+    expect(OcrFix.wdist('parfm', 'parfum'), 1);
+    expect(OcrFix.wdist('parfmu', 'parfum'), 1); // transposition
+    expect(OcrFix.wdist('peg 45', 'peg 40'), greaterThan(2));
+  });
+
+  test('a 30-item list takes well under 200 ms', () {
+    const items = [
+      'Aqua', 'Sodium Laureth Sulfale', 'Cocamidopropyl Betain', 'Glycerin', 'Parfurn', 'Lim0nene', 'Linal00l',
+      'Citric Acid', 'Sodium Chloride', 'Methylparabn', 'Propylparaben', 'Tocopheryl Acetate', 'Panthenoi',
+      'Xanthan Gurn', 'Cetearyl Alcohoi', 'Dimethicone', 'Hexyl Cinnamal', 'Benzyl Alc0hol', 'Phenoxyethanol',
+      'Ethylhexylglycerin', 'Sodiurn Benzoate', 'Potassium Sorbate', 'Disodium EDTA', 'Polyquaternium-10',
+      'Guar Hydroxypropyltrimonium Chloride', 'Citronell0l', 'Geraniol', 'Coumarin', 'Butylphenyl Methylpropional',
+      'CI 19140',
+    ];
+    final text = items.join(', ');
+    final sw = Stopwatch()..start();
+    final cold = fix.suggest(text);
+    final coldMs = sw.elapsedMicroseconds / 1000;
+    sw.reset();
+    fix.suggest(text);
+    final warmMs = sw.elapsedMicroseconds / 1000;
+    // ignore: avoid_print
+    print('30 items: ${coldMs.toStringAsFixed(1)} ms first run, ${warmMs.toStringAsFixed(1)} ms after');
+    expect(cold.length, greaterThanOrEqualTo(10));
+    expect(coldMs, lessThan(200));
+  });
+
+  testWidgets('review screen lists suggestions and uses one on a tap', (tester) async {
+    spelling = Future.value(fix);
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.6;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(const MaterialApp(home: ReviewScreen(text: 'Water, Lim0nene, Parfurn', kind: ReviewKind.photo)));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('CHECK THESE SPELLINGS'), findsOneWidget);
+    expect(find.text('Limonene'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('use-7')));
+    await tester.pump(const Duration(milliseconds: 400));
+    final field = tester.widget<TextField>(find.byKey(const Key('ingredients')));
+    expect(field.controller!.text, 'Water, Limonene, Parfurn');
+    expect(find.byKey(const Key('use-all')), findsNothing); // one left
+    await tester.tap(find.text('USE IT'));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(field.controller!.text, 'Water, Limonene, Parfum');
+    expect(find.text('CHECK THESE SPELLINGS'), findsNothing);
+  });
+}

@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'engine/decoder.dart';
+import 'engine/ocr_fix.dart';
 
 late Decoder decoder;
 
@@ -22,7 +23,12 @@ Future<void> loadDecoder() async {
   final c = await rootBundle.loadString('assets/data/inci-vocab.json');
   decoder = await Isolate.run(() => Decoder.fromJson(a, b, c));
   dataVersion = (jsonDecode(b) as Map)['v'] as String? ?? '';
+  // The spelling index takes a moment to build, so it builds in the background after startup.
+  spelling = Isolate.run(() => OcrFix(Decoder.fromJson(a, b, c)));
 }
+
+/// Spelling suggestions for the review screen (ready a moment after the decoder).
+late Future<OcrFix> spelling;
 
 // ---------- recent scans: shared preferences on the phone, excluded from Android backup ----------
 

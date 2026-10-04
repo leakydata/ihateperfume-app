@@ -1,9 +1,13 @@
 /// Shows the text read from a photo so mistakes can be fixed, or takes a typed or pasted list.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../engine/ocr_fix.dart';
+import '../services.dart';
 import '../theme.dart';
 import 'result.dart';
 
@@ -23,9 +27,24 @@ class ReviewScreen extends StatefulWidget {
 class _ReviewScreenState extends State<ReviewScreen> {
   late final _text = TextEditingController(text: widget.text);
   late final _name = TextEditingController(text: widget.name ?? '');
+  OcrFix? _fix;
+  List<Suggestion> _sugs = const [];
+  String? _seen; // the text the suggestions are for
+  Timer? _wait;
+
+  @override
+  void initState() {
+    super.initState();
+    _text.addListener(_changed);
+    spelling.then((f) {
+      _fix = f;
+      _refresh();
+    });
+  }
 
   @override
   void dispose() {
+    _wait?.cancel();
     _text.dispose();
     _name.dispose();
     super.dispose();
@@ -42,6 +61,60 @@ class _ReviewScreenState extends State<ReviewScreen> {
     _text.value = TextEditingValue(
         text: cur.replaceRange(start, end, t), selection: TextSelection.collapsed(offset: start + t.length));
   }
+
+  void _changed() {
+    if (_text.text == _seen) return; // a cursor move, not an edit
+    _wait?.cancel();
+    _wait = Timer(const Duration(milliseconds: 300), _refresh);
+  }
+
+  void _refresh() {
+    final f = _fix;
+    if (f == null || !mounted) return;
+    _seen = _text.text;
+    setState(() => _sugs = f.suggest(_seen!));
+  }
+
+  /// Replace the misread items with the suggested names (only ever on a tap).
+  void _use(List<Suggestion> picked) {
+    final t = OcrFix.applyAll(_text.text, picked);
+    if (t == _text.text) return;
+    final end = picked.length == 1 ? picked.first.start + picked.first.to.length : t.length;
+    _text.value = TextEditingValue(text: t, selection: TextSelection.collapsed(offset: end));
+    _wait?.cancel();
+    _refresh();
+  }
+
+  Widget _spellings() => Panel(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            const Flexible(child: Mono('Check these spellings')),
+            if (_sugs.length > 1)
+              InkWell(
+                  key: const Key('use-all'),
+                  onTap: () => _use(_sugs),
+                  child: const Padding(padding: EdgeInsets.all(6), child: Mono('Use all', color: C.signal))),
+          ]),
+          const SizedBox(height: 4),
+          Text('Closest known ingredient names. Nothing changes until you tap.', style: T.src()),
+          for (final s in _sugs)
+            Row(children: [
+              Expanded(
+                child: Wrap(crossAxisAlignment: WrapCrossAlignment.center, spacing: 6, children: [
+                  Text(s.from, style: T.src(size: 14, color: C.muted)),
+                  const Icon(Icons.arrow_forward, size: 15, color: C.ink, semanticLabel: 'to'),
+                  Text(s.to, style: T.src(size: 14, color: C.ink).copyWith(fontWeight: FontWeight.w600)),
+                ]),
+              ),
+              InkWell(
+                key: Key('use-${s.start}'),
+                onTap: () => _use([s]),
+                child: const Padding(
+                    padding: EdgeInsets.fromLTRB(12, 14, 0, 14), child: Mono('Use it', color: C.signal)),
+              ),
+            ]),
+        ]),
+      );
 
   void _check() {
     final t = _text.text.trim();
@@ -101,6 +174,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 style: T.src(size: 14.5, color: C.ink).copyWith(height: 1.45),
                 decoration: _box('Water, Glycerin, Fragrance…'),
               ),
+              if (_sugs.isNotEmpty) ...[const SizedBox(height: 12), _spellings()],
               const SizedBox(height: 16),
               const Mono('Product name (optional)'),
               const SizedBox(height: 6),
