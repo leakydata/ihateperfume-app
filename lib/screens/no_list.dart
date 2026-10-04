@@ -4,9 +4,11 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../report.dart';
 import '../services.dart';
 import '../theme.dart';
 import 'contribute.dart';
+import 'ingredient.dart';
 import 'scanner.dart';
 
 class NoListScreen extends StatefulWidget {
@@ -75,13 +77,18 @@ class _NoListScreenState extends State<NoListScreen> {
                 Text('${ihpNote(widget.info)} What the package says, not a guarantee: packages change, so read yours.',
                     style: T.src()),
                 const SizedBox(height: 14),
+                // Approved copy from the design (mockup screen 4). The evidence stays on the website as graded claims
+                // with their sources; the app links there instead of paraphrasing them.
                 Panel(
                   child: Text.rich(TextSpan(style: T.lede.copyWith(fontSize: 14), children: const [
-                    TextSpan(text: '“Unscented” isn’t “fragrance-free.” ', style: TextStyle(fontWeight: FontWeight.w700)),
-                    TextSpan(
-                        text: 'In the US neither word has a legal definition, and the FDA says “unscented” products may '
-                            'contain a masking fragrance. Look for “fragrance-free,” not “unscented.”'),
+                    TextSpan(text: 'Don’t want it on you or in your air? ', style: TextStyle(fontWeight: FontWeight.w700)),
+                    TextSpan(text: 'Look for “fragrance-free,” not “unscented.”'),
                   ])),
+                ),
+                InkWell(
+                  onTap: () => openLink(context, '$site/facts/?grade=all&q=unscented#facts'),
+                  child: const Padding(
+                      padding: EdgeInsets.only(top: 12), child: MonoLink('Why: our graded facts on “unscented”', size: 11)),
                 ),
                 if (widget.barcode != null)
                   InkWell(
