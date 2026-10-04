@@ -4,6 +4,7 @@ import '../main.dart';
 import '../my_list.dart';
 import '../services.dart';
 import '../theme.dart';
+import 'data_setting.dart';
 import 'no_list.dart';
 import 'result.dart';
 import 'scanner.dart';
@@ -129,11 +130,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           for (final s in _recent.take(20)) _RecentRow(s, _onList[s.text] ?? 0),
           const SizedBox(height: 24),
-          ValueListenableBuilder(valueListenable: dataStatus, builder: (context, _, _) => Text(
-            'Ingredient data from ihateperfume.com, ${_date(dataVersion)} · '
-            '${_thousands(decoder.flaggedNames.length)} flagged ingredients',
-            style: T.src(size: 11),
-          )),
+          ValueListenableBuilder(
+              valueListenable: dataStatus,
+              builder: (context, _, _) => DataFooter('Ingredient data from ihateperfume.com, ${_date(dataVersion)} · '
+                  '${_thousands(decoder.flaggedNames.length)} flagged ingredients')),
         ]),
       ),
     ]);
