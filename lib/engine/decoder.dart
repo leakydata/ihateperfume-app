@@ -134,6 +134,10 @@ class Decoder {
   /// Which flagged ingredient a normalized name or synonym belongs to, if any.
   int? itemIndex(String normalized) => _names[normalized];
 
+  /// The flagged ingredient's name as written, and its flag categories (read only).
+  String itemName(int index) => _items[index]['n'] as String;
+  Set<String> itemCats(int index) => {for (final f in (_items[index]['f'] as List)) (f as List)[0] as String};
+
   // ---------- part 1: fragrance (decoder.js) ----------
 
   static final _fragranceWords = <(RegExp, String)>[

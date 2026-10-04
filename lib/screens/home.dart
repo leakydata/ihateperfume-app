@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../main.dart';
+import '../my_list.dart';
 import '../services.dart';
 import '../theme.dart';
 import 'result.dart';
@@ -14,23 +15,48 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Scan> _recent = [];
+  List<ListEntry> _list = MyList.current;
+  final _onList = <String, int>{}; // scan text -> worst reaction level of list hits (0 = none)
+  int _run = 0;
 
   @override
   void initState() {
     super.initState();
     _load();
     History.changes.addListener(_load);
+    MyList.changes.addListener(_load);
   }
 
   @override
   void dispose() {
     History.changes.removeListener(_load);
+    MyList.changes.removeListener(_load);
     super.dispose();
   }
 
   Future<void> _load() async {
     final r = await History.all();
-    if (mounted) setState(() => _recent = r);
+    final l = await MyList.all();
+    if (!mounted) return;
+    setState(() {
+      _recent = r;
+      _list = l;
+      _onList.clear();
+    });
+    _checkList();
+  }
+
+  /// Check recent scans against the list, one label per frame so scrolling stays smooth. Reports are cached, so
+  /// this decodes each label once.
+  Future<void> _checkList() async {
+    final run = ++_run;
+    if (_list.isEmpty) return;
+    for (final s in _recent.take(20)) {
+      await Future<void>.delayed(Duration.zero);
+      if (!mounted || run != _run) return;
+      final level = checkList(decoder, ReportCache.get(decoder, s.text), _list).level;
+      setState(() => _onList[s.text] = level);
+    }
   }
 
   @override
@@ -97,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Text('Nothing yet. What you scan stays on this phone.', style: T.src(size: 12.5)),
             ),
-          for (final s in _recent.take(20)) _RecentRow(s),
+          for (final s in _recent.take(20)) _RecentRow(s, _onList[s.text] ?? 0),
           const SizedBox(height: 24),
           Text(
             'Ingredient data from ihateperfume.com, ${_date(dataVersion)} · '
@@ -127,7 +153,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _RecentRow extends StatelessWidget {
   final Scan s;
-  const _RecentRow(this.s);
+  final int onList; // worst reaction level of list hits, 0 = none
+  const _RecentRow(this.s, this.onList);
   @override
   Widget build(BuildContext context) {
     return Rule(
@@ -142,7 +169,7 @@ class _RecentRow extends StatelessWidget {
           ])),
         ),
         const SizedBox(width: 8),
-        Tag(s.tag, level: s.level),
+        onList > 0 ? Tag('On your list', level: onList) : Tag(s.tag, level: s.level),
       ]),
     );
   }

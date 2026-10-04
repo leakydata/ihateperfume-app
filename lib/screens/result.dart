@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../engine/decoder.dart';
+import '../my_list.dart';
 import '../report.dart';
 import '../services.dart';
 import '../theme.dart';
 import 'ingredient.dart';
+import 'my_list.dart';
 import 'review.dart';
 import 'scanner.dart';
 
@@ -33,23 +35,37 @@ class _ResultScreenState extends State<ResultScreen> {
   late Report _r = Report.build(decoder, widget.text);
   bool _showUnflagged = false;
   bool _showLimits = false;
+  List<ListEntry> _list = MyList.current;
 
   String get _name => widget.name?.isNotEmpty == true ? widget.name! : 'Ingredient list';
 
   @override
   void initState() {
     super.initState();
+    MyList.all().then((_) => _listChanged());
+    MyList.changes.addListener(_listChanged);
     Prefs.productType().then((t) {
       if (!mounted) return;
       setState(() {
         _ptype = t;
         _r = Report.build(decoder, widget.text, ptype: t);
       });
+      ReportCache.put(widget.text, _r);
       if (widget.save) {
         final (tag, level) = _r.tag;
         History.add(Scan(_name, widget.barcode, widget.text, widget.source, DateTime.now(), tag, level));
       }
     });
+  }
+
+  @override
+  void dispose() {
+    MyList.changes.removeListener(_listChanged);
+    super.dispose();
+  }
+
+  void _listChanged() {
+    if (mounted) setState(() => _list = MyList.current);
   }
 
   void _setType(String t) {
@@ -79,6 +95,7 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   Widget build(BuildContext context) {
     final r = _r;
+    final check = checkList(decoder, r, _list);
     final meta = [
       sourceNames[widget.source] ?? '',
       if (widget.barcode != null) 'Barcode ${widget.barcode}',
@@ -108,6 +125,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 if (r.empty)
                   const Text('No ingredients found in that text.', style: T.lede)
                 else ...[
+                  ListBox(check: check, hasList: _list.isNotEmpty, onItem: (item) => _openIngredient(item, _rowOf(item))),
                   VerdictBox(
                     level: r.boxLevel,
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -136,7 +154,7 @@ class _ResultScreenState extends State<ResultScreen> {
                           style: T.src()),
                     ),
                   const SizedBox(height: 4),
-                  for (final row in r.rows) _row(row),
+                  for (final row in r.rows) _row(row, check.reactionFor(row.item)),
                   const SizedBox(height: 10),
                   if (r.unflagged.isNotEmpty)
                     InkWell(
@@ -223,7 +241,9 @@ class _ResultScreenState extends State<ResultScreen> {
     ]);
   }
 
-  Widget _row(IngRow row) => Rule(
+  IngRow? _rowOf(String item) => _r.rows.where((x) => x.item == item).firstOrNull;
+
+  Widget _row(IngRow row, Reaction? onList) => Rule(
         onTap: () => _openIngredient(row.item, row),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
@@ -236,7 +256,10 @@ class _ResultScreenState extends State<ResultScreen> {
               child: Text('Read as “${row.guess}”, check the spelling', style: T.src(color: C.signalDark)),
             ),
           const SizedBox(height: 4),
-          Wrap(spacing: 4, runSpacing: 4, children: [for (final (t, l) in row.chips) Tag(t, level: l)]),
+          Wrap(spacing: 4, runSpacing: 4, children: [
+            if (onList != null) Tag('My list: ${onList.label}', level: onList.level),
+            for (final (t, l) in row.chips) Tag(t, level: l),
+          ]),
         ]),
       );
 

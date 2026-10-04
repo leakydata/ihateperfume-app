@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../engine/decoder.dart';
+import '../my_list.dart';
 import '../report.dart';
 import '../services.dart';
 import '../theme.dart';
+import 'my_list.dart';
 import 'result.dart';
 
 /// Opens a link in the browser. Only ever on a tap.
@@ -30,6 +32,27 @@ class IngredientScreen extends StatefulWidget {
 class _IngredientScreenState extends State<IngredientScreen> {
   late final IngRow? row = widget.row ?? rowFor(widget.name, widget.ptype);
   final _open = <int>{};
+  // The name decoded on its own, to check against the list (groups and words too).
+  late final Report _alone =
+      Report.build(decoder, widget.name.replaceAll(RegExp(r'[,;\n•·●|]+'), ' '), ptype: widget.ptype);
+  List<ListEntry> _list = MyList.current;
+
+  @override
+  void initState() {
+    super.initState();
+    MyList.all().then((_) => _listChanged());
+    MyList.changes.addListener(_listChanged);
+  }
+
+  @override
+  void dispose() {
+    MyList.changes.removeListener(_listChanged);
+    super.dispose();
+  }
+
+  void _listChanged() {
+    if (mounted) setState(() => _list = MyList.current);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +99,7 @@ class _IngredientScreenState extends State<IngredientScreen> {
                     },
                     size: 22),
               ),
+              _myList(r),
               if (r == null) ...[
                 const SizedBox(height: 12),
                 Text(
@@ -119,6 +143,41 @@ class _IngredientScreenState extends State<IngredientScreen> {
         ]),
       ),
     );
+  }
+
+  Widget _myList(IngRow? r) {
+    final own = ingredientEntryFor(decoder, _list, widget.name, guess: r?.guess);
+    final hits = checkList(decoder, _alone, _list).hits;
+    final worst = hits.isEmpty ? null : hits.first.entry.reaction; // worst first
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      if (worst != null) ...[
+        const SizedBox(height: 12),
+        Panel(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Big('On your list: ${worst.label}', size: 22, color: worst.level == 3 ? C.signalDark : C.ink),
+            for (final h in hits)
+              if (h.entry.kind != EntryKind.ingredient)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                      '${h.entry.kind == EntryKind.group ? 'In group “${h.entry.label(decoder)}”' : 'Name contains “${h.entry.value}”'}: '
+                      '${h.entry.reaction.label}',
+                      style: T.src(color: C.ink)),
+                ),
+          ]),
+        ),
+      ],
+      InkWell(
+        onTap: () => editOnList(
+            context, own ?? ListEntry(EntryKind.ingredient, r?.guess ?? widget.name, Reaction.avoid),
+            onList: own != null),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 10, bottom: 2),
+          child: MonoLink(own == null ? 'Add to my list' : 'Change on my list',
+              icon: own == null ? Icons.add : Icons.edit_outlined),
+        ),
+      ),
+    ]);
   }
 
   Widget _reason(int i, Reason x) {
