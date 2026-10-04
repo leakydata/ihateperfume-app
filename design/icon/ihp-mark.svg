@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
+<!-- Small "IHP" mark for tiny sizes (Archivo condensed black outlines over a red rule): ink square, white letters. -->
+<rect width="108" height="108" rx="18" fill="#111"/>
+<g fill="#fff"><path transform="translate(13.44 63.94) scale(0.05216 -0.05216)" d="M49 0V688H242V0Z"/><path transform="translate(30.71 63.94) scale(0.05216 -0.05216)" d="M49 0V688H242V430H355V688H548V0H355V268H242V0Z"/><path transform="translate(63.94 63.94) scale(0.05216 -0.05216)" d="M49 0V688H348Q413 688 455.0 659.0Q497 630 517.5 578.0Q538 526 538 457Q538 385 516.5 331.0Q495 277 452.5 246.5Q410 216 346 216H242V0ZM242 368H298Q324 368 333.5 391.5Q343 415 343 452Q343 477 339.5 495.0Q336 513 326.0 523.5Q316 534 298 534H242Z"/></g>
+<rect x="16.00" y="71.94" width="76.00" height="8" fill="#C4361B"/>
+</svg>
