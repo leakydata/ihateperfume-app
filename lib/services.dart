@@ -191,10 +191,9 @@ Future<Product?> lookUp(String barcode, {http.Client? client}) async {
             .where((x) => x.isNotEmpty)
             .join(' ');
         // Open Food Facts style lists mark allergens with underscores (_milk_); drop them.
-        final ing = (s('ingredients_text_en').isNotEmpty ? s('ingredients_text_en') : s('ingredients_text'))
-            .replaceAll('_', '')
-            .trim();
-        final prod = Product(barcode, name, ing.isEmpty ? null : ing, e.key);
+        final ing = usableIngredients(
+            (s('ingredients_text_en').isNotEmpty ? s('ingredients_text_en') : s('ingredients_text')).replaceAll('_', ''));
+        final prod = Product(barcode, name, ing, e.key);
         if (prod.ingredients != null) return prod;
         nameOnly ??= prod;
       } on Exception {
@@ -371,6 +370,34 @@ const _pgPrefixes = ['0037000', '0012044', '0030772', '0047400', '0075609', '008
     return ('https://smartlabel.pg.com/en-us/0$g13.html', 'See the maker’s ingredient page');
   }
   return ('https://smartlabel.org/product-search/?product=$barcode', 'Search SmartLabel for this barcode');
+}
+
+/// Volunteer databases sometimes hold a Drug Facts panel (uses, warnings, directions) instead of an ingredient list.
+/// Then keep only the ingredient sections it marks ("Active ingredient", "Inactive ingredients"), and if there's no
+/// inactive list, it isn't an ingredient list at all: return null so the lookup moves on. Plain lists pass through.
+String? usableIngredients(String raw) {
+  final t = raw.trim();
+  if (t.isEmpty) return null;
+  final markers = RegExp(r'\b(uses|warnings?|directions|purposes?)\b', caseSensitive: false).allMatches(t).length;
+  final drugFacts = markers >= 2 ||
+      RegExp(r'keep out of reach|poison control|ask a (doctor|dentist|pharmacist)', caseSensitive: false).hasMatch(t);
+  if (!drugFacts) return t;
+  if (!RegExp(r'\b(inactive|other) ingredients?\b', caseSensitive: false).hasMatch(t)) return null;
+  final heading = RegExp(r'\b(?:active|inactive|other) ingredients?\b\s*(?:\([^)]*\))?\s*[:.]?', caseSensitive: false);
+  final stop = RegExp(
+      r'\b(purposes?|uses|warnings?|directions|other information|questions|keep out of reach)\b',
+      caseSensitive: false);
+  final parts = <String>[];
+  for (final m in heading.allMatches(t)) {
+    final rest = t.substring(m.end);
+    var end = rest.length;
+    for (final r in [stop.firstMatch(rest), heading.firstMatch(rest)]) {
+      if (r != null && r.start < end) end = r.start;
+    }
+    final section = rest.substring(0, end).replaceAll(RegExp(r'[\s•·.,;]+$'), '').trim();
+    if (section.isNotEmpty) parts.add(section);
+  }
+  return parts.isEmpty ? null : parts.join(', ');
 }
 
 /// Tidy text read from a photo of a label: start at "Ingredients:", and join lines broken mid-ingredient.
