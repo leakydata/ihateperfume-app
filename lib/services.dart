@@ -13,7 +13,7 @@ import 'engine/decoder.dart';
 import 'engine/ocr_fix.dart';
 
 // The data's version and source, and a check for newer data (for the home footer and the Learn screen).
-export 'data_update.dart' show DataCheck, DataStatus, checkForDataUpdate, dataStatus;
+export 'data_update.dart' show DataCheck, DataStatus, barcodeKey, checkForDataUpdate, dataStatus, localProduct;
 
 /// The decoder in use: the bundled data, or newer data downloaded from the site (see data_update.dart).
 late Decoder decoder;
@@ -168,11 +168,14 @@ const _fields = 'product_name,product_name_en,brands,ingredients_text,ingredient
 const _userAgent = 'IHatePerfume-Android/1.0 (https://ihateperfume.com)';
 const _timeout = Duration(seconds: 10);
 
-/// Open Beauty Facts, then Open Products Facts, then the FDA's drug labels (for US over-the-counter products such
+/// First the products we reviewed ourselves, from the copy on the phone (see data_update.dart): a hit returns at
+/// once and nothing is sent anywhere. Then Open Beauty Facts, then Open Products Facts, then the FDA's drug labels (for US over-the-counter products such
 /// as sunscreen and antiperspirant), then the products we reviewed ourselves on ihateperfume.com (which may have
 /// no ingredient list, only what the package says about scent). Returns the first product that has an ingredient list, else the first one
 /// found without one, else null. Throws [LookupError] if none of them could be reached.
 Future<Product?> lookUp(String barcode, {http.Client? client}) async {
+  final local = localProduct(barcode);
+  if (local != null) return local;
   final c = client ?? http.Client();
   Product? nameOnly;
   var reached = 0;

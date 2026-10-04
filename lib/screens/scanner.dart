@@ -42,6 +42,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
   (String, String)? _maker; // the maker's ingredient page for the barcode in the notice, opened only on tap
   String? _barcode; // carried into the photo step when a barcode had no ingredient list
   String? _name;
+  String? _lookupSource; // where that lookup found the product without its list (obf, opf, fda), for "Report it"
   bool _missed = false; // the notice is a not-found one: show the three choices
   bool _torch = false;
   bool _covered = false; // the "Add it" screen is on top and may be using the camera
@@ -172,6 +173,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
         _busy = null;
         _barcode = code;
         _name = p?.name.isNotEmpty == true ? p!.name : null;
+        _lookupSource = p?.source;
         _missed = true;
         _notice = p == null
             ? 'Barcode $code isn’t in Open Beauty Facts, Open Products Facts, the FDA’s drug labels, or ours.'
@@ -295,7 +297,8 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
   }
 
   void _openReview(String text, ReviewKind kind) => Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => ReviewScreen(text: text, kind: kind, barcode: _barcode, name: _name)));
+      builder: (_) =>
+          ReviewScreen(text: text, kind: kind, barcode: _barcode, name: _name, lookupSource: _lookupSource)));
 
   Future<void> _toggleTorch() async {
     try {

@@ -7,8 +7,10 @@ import 'package:flutter/material.dart';
 import '../report.dart';
 import '../services.dart';
 import '../theme.dart';
+import '../list_report.dart';
 import 'contribute.dart';
 import 'ingredient.dart';
+import 'report_list.dart';
 import 'scanner.dart';
 
 class NoListScreen extends StatefulWidget {
@@ -43,6 +45,7 @@ class _NoListScreenState extends State<NoListScreen> {
   Widget build(BuildContext context) {
     final says = saysTag(widget.info.says);
     final scented = widget.info.says == 'scented';
+    final canReport = isReportBarcode(widget.barcode);
     final meta = ['Checked by I Hate Perfume', if (widget.barcode != null) 'Barcode ${widget.barcode}'].join(' · ');
     return PopScope(
       canPop: false,
@@ -76,6 +79,13 @@ class _NoListScreenState extends State<NoListScreen> {
                 const SizedBox(height: 10),
                 Text('${ihpNote(widget.info)} What the package says, not a guarantee: packages change, so read yours.',
                     style: T.src()),
+                if (canReport)
+                  ReportListLink(
+                      key: ValueKey('${widget.barcode}|ihp'),
+                      barcode: widget.barcode!,
+                      source: 'ihp',
+                      name: widget.name,
+                      noList: true),
                 const SizedBox(height: 14),
                 // Approved copy from the design (mockup screen 4). The evidence stays on the website as graded claims
                 // with their sources; the app links there instead of paraphrasing them.
@@ -90,7 +100,7 @@ class _NoListScreenState extends State<NoListScreen> {
                   child: const Padding(
                       padding: EdgeInsets.only(top: 12), child: MonoLink('Why: our graded facts on “unscented”', size: 11)),
                 ),
-                if (widget.barcode != null)
+                if (widget.barcode != null && !canReport)
                   InkWell(
                     onTap: () => openContribute(context, barcode: widget.barcode, name: widget.name, noList: true),
                     child: const Padding(

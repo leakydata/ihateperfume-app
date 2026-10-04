@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../engine/decoder.dart';
+import '../list_report.dart';
 import '../my_list.dart';
 import '../report.dart';
 import '../services.dart';
@@ -9,6 +10,7 @@ import '../theme.dart';
 import 'contribute.dart';
 import 'ingredient.dart';
 import 'my_list.dart';
+import 'report_list.dart';
 import 'review.dart';
 import 'scanner.dart';
 
@@ -28,8 +30,19 @@ class ResultScreen extends StatefulWidget {
   final String source;
   final IhpInfo? ihp; // when we reviewed it ourselves: from what, and when
   final bool save; // add to recent scans
+
+  /// For a list photographed or typed after a barcode lookup: where the lookup found the product (obf, opf, fda,
+  /// or ihp), so "Report it" can name it. Null when unknown.
+  final String? lookupSource;
   const ResultScreen(
-      {super.key, required this.text, this.name, this.barcode, required this.source, this.ihp, this.save = false});
+      {super.key,
+      required this.text,
+      this.name,
+      this.barcode,
+      required this.source,
+      this.ihp,
+      this.save = false,
+      this.lookupSource});
   @override
   State<ResultScreen> createState() => _ResultScreenState();
 }
@@ -101,6 +114,8 @@ class _ResultScreenState extends State<ResultScreen> {
     final r = _r;
     final check = checkList(decoder, r, _list);
     final maker = widget.barcode == null ? null : makerPage(widget.barcode!);
+    final reportSource = reportSourceFor(widget.source, widget.lookupSource);
+    final canReport = reportSource != null && isReportBarcode(widget.barcode);
     final meta = [
       sourceNames[widget.source] ?? '',
       if (widget.barcode != null) 'Barcode ${widget.barcode}',
@@ -205,6 +220,12 @@ class _ResultScreenState extends State<ResultScreen> {
                     ),
                   if (widget.source == 'ihp')
                     Text('${ihpNote(widget.ihp)} Check it matches your package: formulas change.', style: T.src()),
+                  if (canReport)
+                    ReportListLink(
+                        key: ValueKey('${widget.barcode}|$reportSource'),
+                        barcode: widget.barcode!,
+                        source: reportSource,
+                        name: widget.name),
                   if (maker != null)
                     InkWell(
                       onTap: () => openLink(context, maker.$1),
@@ -219,13 +240,14 @@ class _ResultScreenState extends State<ResultScreen> {
                             kind: ReviewKind.edit,
                             barcode: widget.barcode,
                             name: widget.name,
-                            source: widget.source))),
+                            source: widget.source,
+                            lookupSource: widget.lookupSource))),
                     child: const Padding(
                         padding: EdgeInsets.symmetric(vertical: 10),
                         child: MonoLink('Edit the list', icon: Icons.arrow_forward)),
                   ),
                   _limits(),
-                  if (widget.barcode != null)
+                  if (widget.barcode != null && !canReport)
                     InkWell(
                       onTap: () => openContribute(context, barcode: widget.barcode, name: widget.name),
                       child: Padding(

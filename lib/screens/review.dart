@@ -19,7 +19,9 @@ class ReviewScreen extends StatefulWidget {
   final String? barcode;
   final String? name;
   final String? source; // kept when editing a list that came from a database
-  const ReviewScreen({super.key, required this.text, required this.kind, this.barcode, this.name, this.source});
+  final String? lookupSource; // where a barcode lookup found the product, if it did (for "Report it")
+  const ReviewScreen(
+      {super.key, required this.text, required this.kind, this.barcode, this.name, this.source, this.lookupSource});
   @override
   State<ReviewScreen> createState() => _ReviewScreenState();
 }
@@ -205,7 +207,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
     final source = widget.source ?? (widget.kind == ReviewKind.photo ? 'photo' : 'typed');
     final route = MaterialPageRoute(
       builder: (_) =>
-          ResultScreen(text: t, name: name.isEmpty ? null : name, barcode: widget.barcode, source: source, save: true),
+          ResultScreen(
+              text: t,
+              name: name.isEmpty ? null : name,
+              barcode: widget.barcode,
+              source: source,
+              save: true,
+              lookupSource: widget.lookupSource),
     );
     if (widget.kind == ReviewKind.edit) {
       Navigator.of(context).pushReplacement(route);

@@ -26,22 +26,27 @@ String sha(List<int> b) => sha256.convert(b).toString();
 
 const base = 'https://ihateperfume.com/wp-json/ihp-app/v1';
 
-Map<String, Object> manifest(Map<String, List<int>> files, {String host = 'ihateperfume.com'}) => {
+Map<String, Object> manifest(Map<String, List<int>> files, {String host = 'ihateperfume.com', List<int>? products}) => {
       'v': '2099-10-12',
       'files': {
         for (final e in files.entries)
           e.key: {'url': 'https://$host/wp-json/ihp-app/v1/files/${e.key}', 'sha256': sha(e.value), 'bytes': e.value.length}
       },
       'finds': {'url': '$base/finds', 'updated': '2026-10-04T12:00:00Z'},
+      if (products != null)
+        'products': {'url': '$base/products.json', 'sha256': sha(products), 'bytes': products.length},
     };
 
-/// A fake site: GET /data lists [files]; each file URL serves [serve] (default: [files]). Records every request.
+/// A fake site: GET /data lists [files] (and [products], when given); each file URL serves [serve] (default: [files]
+/// and [products]). Records every request.
 MockClient site(Map<String, List<int>> files, List<http.BaseRequest> log,
-        {Map<String, List<int>>? serve, String host = 'ihateperfume.com'}) =>
+        {Map<String, List<int>>? serve, String host = 'ihateperfume.com', List<int>? products}) =>
     MockClient((req) async {
       log.add(req);
-      if (req.url.toString() == '$base/data') return http.Response(jsonEncode(manifest(files, host: host)), 200);
-      final body = (serve ?? files)[req.url.pathSegments.last];
+      if (req.url.toString() == '$base/data') {
+        return http.Response(jsonEncode(manifest(files, host: host, products: products)), 200);
+      }
+      final body = (serve ?? {...files, 'products.json': ?products})[req.url.pathSegments.last];
       return body == null ? http.Response('', 404) : http.Response.bytes(body, 200);
     });
 
@@ -254,6 +259,155 @@ void main() {
       await loadData();
       expect(dataVersion, bundledVersion);
       expect(await checkForDataUpdate(client: MockClient((_) async => http.Response('', 200))), DataCheck.failed);
+    });
+  });
+
+  group('our reviewed products, checked on the phone first', () {
+    List<int> productsJson(List<Map<String, Object?>> items) =>
+        utf8.encode(jsonEncode({'updated': '2026-10-04T12:00:00Z', 'items': items}));
+    final products = productsJson([
+      {
+        'barcode': '012345678905', // UPC-A
+        'name': 'Acme Soap',
+        'ingredients': 'Water, Glycerin',
+        'no_list': false,
+        'says': 'fragrance-free',
+        'checked': '2026-10',
+        'evidence': 'package photo',
+      },
+      {
+        'barcode': '0098765432109', // EAN-13 form of a UPC-A
+        'name': 'Acme Bags',
+        'ingredients': null,
+        'no_list': true,
+        'says': 'unscented',
+        'checked': '2026-09',
+        'evidence': 'maker site',
+      },
+      {'name': 'No barcode', 'ingredients': 'Water'}, // skipped
+      {'barcode': '4006381333931', 'name': 'Neither a list nor no_list'}, // skipped
+    ]);
+    Directory productsDir() => Directory('${tmp.path}/products');
+    List<Directory> productSets() =>
+        productsDir().existsSync() ? productsDir().listSync().whereType<Directory>().toList() : <Directory>[];
+
+    /// An http client that records (and refuses) every request.
+    MockClient recorder(List<http.BaseRequest> log) => MockClient((req) async {
+          log.add(req);
+          return http.Response('', 404);
+        });
+
+    test('downloaded with the data update, checked, saved, and found with no request at all', () async {
+      final log = <http.BaseRequest>[];
+      expect(await checkForDataUpdate(client: site(assets, log, products: products)), DataCheck.updated);
+      expect(paths(log), ['/wp-json/ihp-app/v1/data', '/wp-json/ihp-app/v1/products.json']);
+      expect(log.last.headers.keys.map((k) => k.toLowerCase()), ['user-agent']);
+      expect(dataStatus.value.products, 2);
+      expect(dataVersion, bundledVersion); // the decoder files didn't change
+      expect(productSets(), hasLength(1));
+
+      Future<void> expectLocal() async {
+        final requests = <http.BaseRequest>[];
+        final soap = await lookUp('012345678905', client: recorder(requests));
+        expect(soap!.source, 'ihp');
+        expect(soap.name, 'Acme Soap');
+        expect(soap.ingredients, 'Water, Glycerin');
+        expect(soap.ihp!.says, 'fragrance-free');
+        expect(soap.barcode, '012345678905');
+        // The UPC-A and its 13-digit form match either way round.
+        final soap13 = await lookUp('0012345678905', client: recorder(requests));
+        expect(soap13!.name, 'Acme Soap');
+        expect(soap13.barcode, '0012345678905');
+        final bags = await lookUp('098765432109', client: recorder(requests));
+        expect(bags!.noList, isTrue);
+        expect(bags.ihp!.evidence, 'maker site');
+        expect(requests, isEmpty);
+      }
+
+      await expectLocal();
+      expect(localProduct('4006381333931'), isNull);
+
+      // The next start uses the saved copy.
+      debugDataStore = store();
+      await loadData();
+      expect(dataStatus.value.products, 2);
+      await expectLocal();
+
+      // Unchanged products aren't downloaded again.
+      final log2 = <http.BaseRequest>[];
+      expect(await checkForDataUpdate(force: true, client: site(assets, log2, products: products)), DataCheck.unchanged);
+      expect(paths(log2), ['/wp-json/ihp-app/v1/data']);
+    });
+
+    test('a miss still asks the databases, with our server last', () async {
+      await checkForDataUpdate(client: site(assets, [], products: products));
+      final requests = <http.BaseRequest>[];
+      expect(await lookUp('4006381333931', client: recorder(requests)), isNull);
+      expect(requests.first.url.host, 'world.openbeautyfacts.org');
+      expect(requests.last.url.toString(), '$base/products/4006381333931');
+    });
+
+    test('products whose sha256 differs from the listing are rejected; the decoder update still happens', () async {
+      final served = utf8.encode(utf8.decode(products).replaceFirst('Acme Soap', 'Acme Sope'));
+      expect(served.length, products.length);
+      final log = <http.BaseRequest>[];
+      final files = {...assets, 'decoder-data.json': withVersion('2099-10-12')};
+      final result = await checkForDataUpdate(
+          client: site(files, log, products: products, serve: {...files, 'products.json': served}));
+      expect(result, DataCheck.updated);
+      expect(dataVersion, '2099-10-12');
+      expect(localProduct('012345678905'), isNull);
+      expect(dataStatus.value.products, 0);
+      expect(productSets(), isEmpty);
+      expect(tmp.listSync().where((e) => e.path.contains('tmp-')), isEmpty);
+    });
+
+    test('products that are not a list of products are rejected', () async {
+      final bad = utf8.encode('{"items": "nope"}');
+      expect(await checkForDataUpdate(client: site(assets, [], products: bad)), DataCheck.unchanged);
+      expect(productSets(), isEmpty);
+    });
+
+    test('decoder updates work without a products entry, and keep the products already saved', () async {
+      await checkForDataUpdate(client: site(assets, [], products: products));
+      expect(dataStatus.value.products, 2);
+      final log = <http.BaseRequest>[];
+      final files = {...assets, 'decoder-data.json': withVersion('2099-10-12')};
+      expect(await checkForDataUpdate(force: true, client: site(files, log)), DataCheck.updated);
+      expect(paths(log), ['/wp-json/ihp-app/v1/data', '/wp-json/ihp-app/v1/files/decoder-data.json']);
+      expect(dataVersion, '2099-10-12');
+      expect(localProduct('012345678905'), isNotNull);
+      expect(dataStatus.value.products, 2);
+    });
+
+    test('a decoder set that fails still lets new products in', () async {
+      final listed = withVersion('2099-10-12');
+      final served = Uint8List.fromList(listed)..[listed.length - 3] = 0x38;
+      final files = {...assets, 'decoder-data.json': listed};
+      final result = await checkForDataUpdate(
+          client: site(files, [], products: products, serve: {...files, 'decoder-data.json': served, 'products.json': products}));
+      expect(result, DataCheck.failed);
+      expect(dataVersion, bundledVersion);
+      expect(localProduct('012345678905'), isNotNull);
+    });
+
+    test('a saved copy that was changed is removed at start', () async {
+      await checkForDataUpdate(client: site(assets, [], products: products));
+      final dir = productSets().single;
+      File('${dir.path}/products.json').writeAsStringSync('{"items": []}');
+      debugDataStore = store();
+      await loadData();
+      expect(localProduct('012345678905'), isNull);
+      expect(dataStatus.value.products, 0);
+      expect(dir.existsSync(), isFalse);
+    });
+
+    test('barcode forms', () {
+      expect(barcodeKey('012345678905'), '0012345678905');
+      expect(barcodeKey('0012345678905'), '0012345678905');
+      expect(barcodeKey('00012345678905'), '0012345678905');
+      expect(barcodeKey('4006381333931'), '4006381333931');
+      expect(barcodeKey('12345670'), '12345670');
     });
   });
 
