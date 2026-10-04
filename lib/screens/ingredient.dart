@@ -66,6 +66,9 @@ class _IngredientScreenState extends State<IngredientScreen> {
                 level: level,
                 child: Big(
                     switch (level) {
+                      // Fragrance on the label is shown in red, but it isn't one of the decoder's red flags.
+                      3 when r!.reasons.where((x) => x.level == 3).every((x) => x.title == 'Hidden mixture') =>
+                        'Hidden fragrance mixture',
                       3 => 'Red flag',
                       2 => 'Worth a closer look',
                       1 => 'Worth knowing',

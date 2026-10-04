@@ -88,7 +88,7 @@ class Report {
       add(
           f.item,
           Reason('Hidden mixture', 'Fragrance declared', '',
-              '${f.label}. The individual chemicals in the mixture don’t have to be listed.', 'The ingredient list',
+              '${f.label}. The individual chemicals in the mixture don’t have to be listed.', 'the ingredient list itself',
               null, 3));
     }
     for (final a in r.allergens) {
