@@ -1,0 +1,503 @@
+[
+ {
+  "verdict": "amber",
+  "verdictText": "No red flags, but worth a closer look: Chemical of concern · Scent ingredient",
+  "fragrance": [],
+  "allergens": [],
+  "plantOils": [],
+  "flags": [
+   {
+    "item": "Sodium Laureth Sulfate",
+    "guess": null,
+    "chips": [
+     "Chemical of concern"
+    ]
+   },
+   {
+    "item": "Heliotropine",
+    "guess": null,
+    "chips": [
+     "Scent ingredient"
+    ]
+   }
+  ]
+ },
+ {
+  "verdict": "amber",
+  "verdictText": "No red flags, but worth a closer look: Scent ingredient · Skin allergen · Oxidizes into stronger allergens",
+  "fragrance": [
+   "Parfum"
+  ],
+  "allergens": [
+   "Linalool",
+   "Limonene",
+   "Citral",
+   "Geraniol",
+   "Benzyl Alcohol"
+  ],
+  "plantOils": [
+   "Lavandula Angustifolia Oil"
+  ],
+  "flags": [
+   {
+    "item": "Parfum",
+    "guess": null,
+    "chips": [
+     "Scent ingredient"
+    ]
+   },
+   {
+    "item": "Linalool",
+    "guess": null,
+    "chips": [
+     "Skin allergen",
+     "Scent ingredient",
+     "Oxidizes into stronger allergens"
+    ]
+   },
+   {
+    "item": "Limonene",
+    "guess": null,
+    "chips": [
+     "Skin allergen",
+     "Oxidizes into stronger allergens"
+    ]
+   },
+   {
+    "item": "Citral",
+    "guess": null,
+    "chips": [
+     "Skin allergen",
+     "Scent ingredient",
+     "Limited by IFRA"
+    ]
+   },
+   {
+    "item": "Geraniol",
+    "guess": null,
+    "chips": [
+     "Skin allergen",
+     "Scent ingredient",
+     "Oxidizes into stronger allergens",
+     "Limited by IFRA"
+    ]
+   },
+   {
+    "item": "Lavandula Angustifolia Oil",
+    "guess": null,
+    "chips": [
+     "Scent ingredient",
+     "Oxidizes into stronger allergens"
+    ]
+   },
+   {
+    "item": "Benzyl Alcohol",
+    "guess": null,
+    "chips": [
+     "Skin allergen",
+     "Limited by IFRA"
+    ]
+   }
+  ]
+ },
+ {
+  "verdict": "amber",
+  "verdictText": "No red flags, but worth a closer look: Skin allergen · Oxidizes into stronger allergens · Suspected endocrine disruptor",
+  "fragrance": [
+   "Fragrance"
+  ],
+  "allergens": [],
+  "plantOils": [],
+  "flags": [
+   {
+    "item": "Lim0nene",
+    "guess": " (read as “Limonene”, check the spelling)",
+    "chips": [
+     "Skin allergen",
+     "Oxidizes into stronger allergens"
+    ]
+   },
+   {
+    "item": "Methylparabn",
+    "guess": " (read as “Methylparaben”, check the spelling)",
+    "chips": [
+     "Suspected endocrine disruptor"
+    ]
+   }
+  ]
+ },
+ {
+  "verdict": "amber",
+  "verdictText": "No red flags, but worth a closer look: Chemical of concern",
+  "fragrance": [],
+  "allergens": [],
+  "plantOils": [],
+  "flags": [
+   {
+    "item": "PEG-40 Hydrogenated Castor Oil",
+    "guess": null,
+    "chips": [
+     "Chemical of concern"
+    ]
+   },
+   {
+    "item": "Phenoxyethanol",
+    "guess": null,
+    "chips": [
+     "Chemical of concern"
+    ]
+   }
+  ]
+ },
+ {
+  "verdict": "red",
+  "verdictText": "2 red flags: Banned in EU cosmetics · Reproductive toxicant",
+  "fragrance": [
+   "Parfum (Fragrance)"
+  ],
+  "allergens": [
+   "Hydroxyisohexyl 3-Cyclohexene Carboxaldehyde",
+   "Butylphenyl Methylpropional"
+  ],
+  "plantOils": [],
+  "flags": [
+   {
+    "item": "Hydroxyisohexyl 3-Cyclohexene Carboxaldehyde",
+    "guess": null,
+    "chips": [
+     "Banned in EU cosmetics",
+     "Skin allergen",
+     "Scent ingredient",
+     "Limited by IFRA"
+    ]
+   },
+   {
+    "item": "Butylphenyl Methylpropional",
+    "guess": null,
+    "chips": [
+     "Banned in EU cosmetics",
+     "Reproductive toxicant",
+     "Suspected endocrine disruptor",
+     "Scent ingredient",
+     "Limited by IFRA"
+    ]
+   },
+   {
+    "item": "Parfum (Fragrance)",
+    "guess": null,
+    "chips": [
+     "Scent ingredient"
+    ]
+   },
+   {
+    "item": "Butyl Methoxydibenzoylmethane",
+    "guess": null,
+    "chips": [
+     "Suspected endocrine disruptor"
+    ]
+   }
+  ]
+ },
+ {
+  "verdict": "amber",
+  "verdictText": "No red flags, but worth a closer look: Scent ingredient",
+  "fragrance": [
+   "Essential Oils",
+   "Masking Fragrance",
+   "Masking Fragrance"
+  ],
+  "allergens": [
+   "Eucalyptus Globulus Leaf Oil",
+   "Citrus Limon Peel Oil"
+  ],
+  "plantOils": [],
+  "flags": [
+   {
+    "item": "Eucalyptus Globulus Leaf Oil",
+    "guess": null,
+    "chips": [
+     "Scent ingredient"
+    ]
+   },
+   {
+    "item": "Citrus Limon Peel Oil",
+    "guess": null,
+    "chips": [
+     "Scent ingredient"
+    ]
+   }
+  ]
+ },
+ {
+  "verdict": "red",
+  "verdictText": "1 red flag: Cancer classification",
+  "fragrance": [
+   "Fragrance"
+  ],
+  "allergens": [],
+  "plantOils": [],
+  "flags": [
+   {
+    "item": "Talc",
+    "guess": null,
+    "chips": [
+     "Cancer classification",
+     "Chemical of concern",
+     "Restricted in the EU"
+    ]
+   },
+   {
+    "item": "Cyclopentasiloxane",
+    "guess": null,
+    "chips": [
+     "Suspected endocrine disruptor"
+    ]
+   },
+   {
+    "item": "BHT",
+    "guess": null,
+    "chips": [
+     "Suspected endocrine disruptor",
+     "Chemical of concern",
+     "Restricted in the EU"
+    ]
+   },
+   {
+    "item": "Triclosan",
+    "guess": null,
+    "chips": [
+     "Suspected endocrine disruptor",
+     "Chemical of concern"
+    ]
+   },
+   {
+    "item": "Butane",
+    "guess": null,
+    "chips": [
+     "Restricted in the EU"
+    ]
+   }
+  ]
+ },
+ {
+  "verdict": "red",
+  "verdictText": "3 red flags: Releases formaldehyde · Banned in EU cosmetics · Cancer classification",
+  "fragrance": [],
+  "allergens": [],
+  "plantOils": [],
+  "flags": [
+   {
+    "item": "DMDM Hydantoin",
+    "guess": null,
+    "chips": [
+     "Releases formaldehyde",
+     "Chemical of concern"
+    ]
+   },
+   {
+    "item": "Quaternium-15",
+    "guess": null,
+    "chips": [
+     "Banned in EU cosmetics",
+     "Skin allergen",
+     "Suspected reproductive toxicant",
+     "Chemical of concern"
+    ]
+   },
+   {
+    "item": "Formaldehyde",
+    "guess": null,
+    "chips": [
+     "Banned in EU cosmetics",
+     "Cancer classification",
+     "Skin allergen",
+     "Suspected genetic damage",
+     "Chemical of concern"
+    ]
+   },
+   {
+    "item": "Methylisothiazolinone",
+    "guess": null,
+    "chips": [
+     "Skin allergen",
+     "Chemical of concern",
+     "Restricted in the EU"
+    ]
+   },
+   {
+    "item": "Methylchloroisothiazolinone",
+    "guess": null,
+    "chips": [
+     "Skin allergen",
+     "Chemical of concern",
+     "Restricted in the EU"
+    ]
+   }
+  ]
+ },
+ {
+  "verdict": "amber",
+  "verdictText": "No red flags, but worth a closer look: Chemical of concern",
+  "fragrance": [],
+  "allergens": [],
+  "plantOils": [],
+  "flags": [
+   {
+    "item": "Petrolatum",
+    "guess": null,
+    "chips": [
+     "Chemical of concern",
+     "Restricted in the EU"
+    ]
+   },
+   {
+    "item": "Mineral Oil",
+    "guess": null,
+    "chips": [
+     "Chemical of concern"
+    ]
+   },
+   {
+    "item": "Bisabolol",
+    "guess": null,
+    "chips": [
+     "Limited by IFRA"
+    ]
+   }
+  ]
+ },
+ {
+  "verdict": "red",
+  "verdictText": "1 red flag: PFAS (forever chemical)",
+  "fragrance": [],
+  "allergens": [],
+  "plantOils": [],
+  "flags": [
+   {
+    "item": "PTFE",
+    "guess": null,
+    "chips": [
+     "PFAS (forever chemical)",
+     "Chemical of concern"
+    ]
+   },
+   {
+    "item": "Oxybenzone",
+    "guess": null,
+    "chips": [
+     "Chemical of concern"
+    ]
+   },
+   {
+    "item": "Homosalate",
+    "guess": null,
+    "chips": [
+     "Chemical of concern"
+    ]
+   }
+  ]
+ },
+ {
+  "verdict": "amber",
+  "verdictText": "No red flags, but worth a closer look: Scent ingredient · Skin allergen · Possible carcinogen",
+  "fragrance": [],
+  "allergens": [
+   "Hydroxycitronellal",
+   "Isoeugenol",
+   "Coumarin",
+   "Eugenol",
+   "Amyl Cinnamal",
+   "Amyl Cinnamal",
+   "Hexyl Cinnamal",
+   "Benzyl Salicylate"
+  ],
+  "plantOils": [],
+  "flags": [
+   {
+    "item": "Hydroxycitronellal",
+    "guess": null,
+    "chips": [
+     "Scent ingredient",
+     "Limited by IFRA"
+    ]
+   },
+   {
+    "item": "Isoeugenol",
+    "guess": null,
+    "chips": [
+     "Skin allergen",
+     "Possible carcinogen",
+     "Scent ingredient",
+     "Limited by IFRA"
+    ]
+   },
+   {
+    "item": "Coumarin",
+    "guess": null,
+    "chips": [
+     "Scent ingredient",
+     "Limited by IFRA"
+    ]
+   },
+   {
+    "item": "Eugenol",
+    "guess": null,
+    "chips": [
+     "Scent ingredient",
+     "Limited by IFRA"
+    ]
+   },
+   {
+    "item": "Amyl Cinnamal",
+    "guess": null,
+    "chips": [
+     "Scent ingredient",
+     "Limited by IFRA"
+    ]
+   },
+   {
+    "item": "Cinnamal",
+    "guess": null,
+    "chips": [
+     "Skin allergen",
+     "Scent ingredient",
+     "Limited by IFRA"
+    ]
+   },
+   {
+    "item": "Hexyl Cinnamal",
+    "guess": null,
+    "chips": [
+     "Scent ingredient",
+     "Limited by IFRA"
+    ]
+   },
+   {
+    "item": "Benzyl Salicylate",
+    "guess": null,
+    "chips": [
+     "Skin allergen",
+     "Limited by IFRA"
+    ]
+   }
+  ]
+ },
+ {
+  "verdict": "amber",
+  "verdictText": "No red flags, but worth a closer look: Scent ingredient",
+  "fragrance": [
+   "Perfume"
+  ],
+  "allergens": [],
+  "plantOils": [],
+  "flags": [
+   {
+    "item": "Perfume",
+    "guess": " (read as “Parfum”, check the spelling)",
+    "chips": [
+     "Scent ingredient"
+    ]
+   }
+  ]
+ }
+]

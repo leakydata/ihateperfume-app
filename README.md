@@ -1,4 +1,4 @@
-# I Hate Perfume app (name to be decided)
+# I Hate Perfume (Android app)
 
 Native Android app (Flutter, so iOS can follow) for finding fragrance in products: scan a barcode or photograph
 the ingredient list, see which ingredients are scent ingredients or fragrance allergens and why, and find
@@ -23,3 +23,7 @@ IBM Plex Mono for labels.
 - Ingredient matching: the website label decoder's dataset (`decoder-data.json`, about 140 KB compressed), bundled
   for offline use and refreshed from ihateperfume.com.
 - Barcodes: Open Beauty Facts and Open Products Facts (ODbL, credit required), then our own reviewed submissions.
+
+## License
+GPL-3.0 with the additional terms in `ADDITIONAL-TERMS.md`: keep the credit to ihateperfume.com, mark modified
+versions, and don't use the I Hate Perfume name or logos for them.
