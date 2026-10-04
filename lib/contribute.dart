@@ -20,6 +20,13 @@ const appVersion = '1.0.0+1';
 const maxPhotoBytes = 2500000;
 const maxPhotoSide = 2000;
 
+/// The contract's limits for one submission: at most 3 ingredient-list photos, 3 extra photos, 7 photos in all,
+/// and 18 MB for the whole request.
+const maxIngredientPhotos = 3;
+const maxExtraPhotos = 3;
+const maxPhotos = 7;
+const maxRequestBytes = 18000000;
+
 /// The categories for products with no ingredient list (the finds categories, and Other).
 const submitCategories = ['Trash bags', 'Laundry', 'Cleaning', 'Paper', 'Other'];
 
@@ -62,7 +69,12 @@ class Submission {
   final bool noList;
   final String? category;
   final Uint8List front;
-  final Uint8List? ingredients;
+
+  /// The ingredient-list photos, in reading order (the list can wrap around a bottle). Not sent when [noList].
+  final List<Uint8List> ingredients;
+
+  /// Optional photos of the rest of the package (back, sides, bottom).
+  final List<Uint8List> extras;
   const Submission({
     this.barcode,
     this.name = '',
@@ -71,7 +83,8 @@ class Submission {
     this.noList = false,
     this.category,
     required this.front,
-    this.ingredients,
+    this.ingredients = const [],
+    this.extras = const [],
   });
 
   /// The barcode if it's one the server accepts (8 to 14 digits), else none.
@@ -94,22 +107,45 @@ class Submission {
         'category': ?sentCategory,
         'app': appVersion,
       };
+
+  /// Every photo that goes out, with its contract field name, in order and numbered without gaps:
+  /// front, ingredients, ingredients_2, ingredients_3, extra_1, extra_2, extra_3.
+  List<(String, Uint8List)> get photos => [
+        ('front', front),
+        if (!noList)
+          for (final (i, p) in ingredients.indexed) (i == 0 ? 'ingredients' : 'ingredients_${i + 1}', p),
+        for (final (i, p) in extras.indexed) ('extra_${i + 1}', p),
+      ];
 }
 
 final submissionsUri = Uri.parse('$ihpApi/submissions');
 
-/// The multipart request for [s]: its fields, the front photo, and the ingredient photo unless there's no list.
-http.MultipartRequest buildSubmissionRequest(Submission s) {
-  final r = http.MultipartRequest('POST', submissionsUri)
-    ..headers['User-Agent'] = appUserAgent
-    ..fields.addAll(s.fields)
-    ..files.add(http.MultipartFile.fromBytes('front', s.front,
-        filename: 'front.jpg', contentType: http.MediaType('image', 'jpeg')));
-  if (s.ingredients != null && !s.noList) {
-    r.files.add(http.MultipartFile.fromBytes('ingredients', s.ingredients!,
-        filename: 'ingredients.jpg', contentType: http.MediaType('image', 'jpeg')));
+/// The multipart request for [s]: its fields and its [Submission.photos], each under its own field name.
+http.MultipartRequest buildSubmissionRequest(Submission s) => http.MultipartRequest('POST', submissionsUri)
+  ..headers['User-Agent'] = appUserAgent
+  ..fields.addAll(s.fields)
+  ..files.addAll([
+    for (final (field, bytes) in s.photos)
+      http.MultipartFile.fromBytes(field, bytes, filename: '$field.jpg', contentType: http.MediaType('image', 'jpeg')),
+  ]);
+
+/// Why [s] can't be sent as it is (too many photos, or too big), or null when it's within the contract's limits.
+String? submissionProblem(Submission s, {int maxBytes = maxRequestBytes}) {
+  if (!s.noList && s.ingredients.length > maxIngredientPhotos) {
+    return 'Send at most $maxIngredientPhotos photos of the ingredient list. Remove one and try again.';
   }
-  return r;
+  if (s.extras.length > maxExtraPhotos) {
+    return 'Send at most $maxExtraPhotos extra photos of the package. Remove one and try again.';
+  }
+  final photos = s.photos;
+  if (photos.length > maxPhotos) return 'Send at most $maxPhotos photos. Remove one and try again.';
+  if (photos.any((p) => p.$2.length > maxPhotoBytes)) {
+    return 'One of the photos is too big to send. Take it again.';
+  }
+  if (buildSubmissionRequest(s).contentLength > maxBytes) {
+    return 'The photos are too big to send together. Remove one and try again.';
+  }
+  return null;
 }
 
 /// The server's answer: a reference to quote, or a message to show.
@@ -123,6 +159,8 @@ class SubmitResult {
 
 /// Sends [s]. Never throws: any problem comes back as a plain-English [SubmitResult.error].
 Future<SubmitResult> sendSubmission(Submission s, {http.Client? client}) async {
+  final problem = submissionProblem(s);
+  if (problem != null) return SubmitResult.failed(problem);
   final c = client ?? http.Client();
   try {
     final res =

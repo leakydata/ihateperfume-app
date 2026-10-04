@@ -1,4 +1,5 @@
-/// "Not found? Add it": two photos and a few checkboxes, then a confirmation step that shows exactly what will be
+/// "Not found? Add it": two photos (the front and the ingredient list; up to 3 of the list if it wraps around, and up
+/// to 3 optional photos of the rest of the package) and a few checkboxes, then a confirmation step that shows exactly what will be
 /// sent. Photos are cleaned on the phone (re-encoded with no metadata) as soon as they're taken, and held only in
 /// memory; the camera's or picker's file is deleted right away. Nothing leaves the phone until Send.
 library;
@@ -17,12 +18,19 @@ Future<void> openContribute(BuildContext context,
     Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => ContributeScreen(barcode: barcode, name: name, noList: noList, back: back)));
 
+/// Gets one cleaned photo (or null if the user backed out). The default asks camera or gallery, then [preparePhoto].
+typedef PhotoPicker = Future<Uint8List?> Function();
+
 class ContributeScreen extends StatefulWidget {
   final String? barcode;
   final String? name;
   final bool noList;
   final String back;
-  const ContributeScreen({super.key, this.barcode, this.name, this.noList = false, this.back = 'Scan'});
+
+  /// For tests: replaces the camera and gallery.
+  final PhotoPicker? pickPhoto;
+  const ContributeScreen(
+      {super.key, this.barcode, this.name, this.noList = false, this.back = 'Scan', this.pickPhoto});
   @override
   State<ContributeScreen> createState() => _ContributeScreenState();
 }
@@ -30,7 +38,9 @@ class ContributeScreen extends StatefulWidget {
 class _ContributeScreenState extends State<ContributeScreen> {
   int _step = 1; // 1 the form, 2 check and send, 3 sent
   Uint8List? _front;
-  Uint8List? _ingredients;
+  final _lists = <Uint8List>[]; // the ingredient list, in reading order
+  final _extras = <Uint8List>[]; // more of the package (optional)
+  bool _moreOpen = false;
   bool _fragranceFree = false;
   bool _unscented = false;
   late bool _noList = widget.noList;
@@ -40,7 +50,7 @@ class _ContributeScreenState extends State<ContributeScreen> {
   String? _error;
   String? _ref;
 
-  bool get _ready => _front != null && (_ingredients != null || _noList);
+  bool get _ready => _front != null && (_lists.isNotEmpty || _noList);
 
   Submission get _submission => Submission(
         barcode: widget.barcode,
@@ -50,22 +60,35 @@ class _ContributeScreenState extends State<ContributeScreen> {
         noList: _noList,
         category: _category,
         front: _front!,
-        ingredients: _noList ? null : _ingredients,
+        ingredients: _noList ? const [] : List.of(_lists),
+        extras: List.of(_extras),
       );
 
   @override
   void dispose() {
+    _forget();
     _name.dispose();
     super.dispose();
   }
 
   void _forget() {
     _front = null;
-    _ingredients = null;
+    _lists.clear();
+    _extras.clear();
   }
 
-  Future<void> _pick({required bool front}) async {
+  /// Gets a photo and hands it to [put] (inside setState).
+  Future<void> _pick(void Function(Uint8List) put) async {
     if (_busy != null) return;
+    final photo = await (widget.pickPhoto ?? _pickFromPhone)();
+    if (photo != null && mounted) setState(() => put(photo));
+  }
+
+  /// Replaces photo [i] of [photos], or adds one at the end.
+  void Function(Uint8List) _putAt(List<Uint8List> photos, int i) =>
+      (p) => i < photos.length ? photos[i] = p : photos.add(p);
+
+  Future<Uint8List?> _pickFromPhone() async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       shape: const RoundedRectangleBorder(),
@@ -81,7 +104,7 @@ class _ContributeScreenState extends State<ContributeScreen> {
         ]),
       ),
     );
-    if (source == null || !mounted) return;
+    if (source == null || !mounted) return null;
     XFile? x;
     try {
       x = await ImagePicker().pickImage(source: source, requestFullMetadata: false);
@@ -89,16 +112,15 @@ class _ContributeScreenState extends State<ContributeScreen> {
       _snack(source == ImageSource.camera
           ? 'The camera couldn’t open. You can turn it on for this app in Settings.'
           : 'Your photos couldn’t open.');
-      return;
+      return null;
     }
-    if (x == null || !mounted) return;
+    if (x == null || !mounted) return null;
     setState(() => _busy = 'Preparing the photo');
     try {
-      final clean = await preparePhotoInBackground(await x.readAsBytes());
-      if (!mounted) return;
-      setState(() => front ? _front = clean : _ingredients = clean);
+      return await preparePhotoInBackground(await x.readAsBytes());
     } catch (_) {
       _snack('That photo couldn’t be read. Try another.');
+      return null;
     } finally {
       // The picker's own copy (with its metadata) lives in the app's cache: delete it now. Never the original.
       if (x.path.contains('/com.ihateperfume.ihateperfume/cache/')) {
@@ -190,20 +212,41 @@ class _ContributeScreenState extends State<ContributeScreen> {
         const SizedBox(height: 10),
         const Text('Help the next person. Two photos, no account.', style: T.lede),
         const SizedBox(height: 16),
-        Row(children: [
-          Expanded(child: _photoBox('Front of\nthe package', _front, C.ink, () => _pick(front: true))),
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(child: _photoBox('Front of\nthe package', _front, C.ink, () => _pick((p) => _front = p))),
           const SizedBox(width: 12),
           Expanded(
-            child: Opacity(
-              opacity: _noList ? .35 : 1,
-              child: _photoBox('Ingredient\nlist', _ingredients, C.signal, _noList ? null : () => _pick(front: false)),
-            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Opacity(
+                opacity: _noList ? .35 : 1,
+                child: _photoBox('Ingredient\nlist', _noList ? null : _lists.firstOrNull, C.signal,
+                    _noList ? null : () => _pick(_putAt(_lists, 0))),
+              ),
+              if (!_noList && _lists.length > 1) ...[
+                const SizedBox(height: 8),
+                _thumbRow([
+                  for (final (i, p) in _lists.indexed)
+                    _thumb(p, 'Ingredient list ${i + 1}', '${i + 1}', () => _pick(_putAt(_lists, i)),
+                        () => setState(() => _lists.removeAt(i))),
+                ]),
+              ],
+              if (!_noList && _lists.isNotEmpty && _lists.length < maxIngredientPhotos)
+                InkWell(
+                  onTap: () => _pick(_putAt(_lists, _lists.length)),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Mono('+ Add another (if the list wraps around)', size: 10.5, color: C.signal),
+                  ),
+                ),
+            ]),
           ),
         ]),
         if (widget.barcode != null) ...[
           const SizedBox(height: 10),
           Mono('Barcode ${widget.barcode}', size: 11, color: C.muted),
         ],
+        const SizedBox(height: 12),
+        _more(),
         const SizedBox(height: 18),
         const Mono('The package says'),
         const SizedBox(height: 4),
@@ -251,6 +294,7 @@ class _ContributeScreenState extends State<ContributeScreen> {
         ),
         const SizedBox(height: 14),
         Text('We check every photo before it goes live. Photos are stripped of location data.', style: T.src()),
+        if (!_moreOpen) ...[const SizedBox(height: 4), Text(_personalHint, style: T.src())],
         if (!_ready && _front != null)
           Padding(
             padding: const EdgeInsets.only(top: 6),
@@ -288,6 +332,94 @@ class _ContributeScreenState extends State<ContributeScreen> {
         ),
       );
 
+  static const _personalHint = 'Photograph the package, not people or anything personal.';
+
+  /// "Add more photos (optional)": collapsed until tapped; up to 3 small slots.
+  Widget _more() => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Rule(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          onTap: () => setState(() => _moreOpen = !_moreOpen),
+          child: Row(children: [
+            Expanded(
+              child: Mono(
+                  _extras.isEmpty ? 'Add more photos (optional)' : 'Add more photos (optional) · ${_extras.length}',
+                  size: 11,
+                  color: C.muted),
+            ),
+            Icon(_moreOpen ? Icons.expand_less : Icons.expand_more, size: 20, color: C.muted),
+          ]),
+        ),
+        if (_moreOpen) ...[
+          const SizedBox(height: 8),
+          Text(
+              'Only if it helps: the back, the sides, or the bottom, especially anything that says “scented” or '
+              '“unscented.”',
+              style: T.src()),
+          const SizedBox(height: 8),
+          _thumbRow([
+            for (final (i, p) in _extras.indexed)
+              _thumb(p, 'More of the package ${i + 1}', '${i + 1}', () => _pick(_putAt(_extras, i)),
+                  () => setState(() => _extras.removeAt(i))),
+            if (_extras.length < maxExtraPhotos)
+              Semantics(
+                button: true,
+                label: 'Add a photo: more of the package',
+                child: InkWell(
+                  onTap: () => _pick(_putAt(_extras, _extras.length)),
+                  child: CustomPaint(
+                    painter: _Dashed(C.ink),
+                    child: const Center(child: Mono('+', size: 18)),
+                  ),
+                ),
+              ),
+          ]),
+          const SizedBox(height: 8),
+          Text(_personalHint, style: T.src()),
+        ],
+      ]);
+
+  /// Up to 3 small square slots side by side.
+  Widget _thumbRow(List<Widget> slots) => Row(children: [
+        for (var i = 0; i < 3; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          Expanded(child: AspectRatio(aspectRatio: 1, child: i < slots.length ? slots[i] : const SizedBox())),
+        ],
+      ]);
+
+  /// A small photo: tap to retake, the corner button removes it.
+  Widget _thumb(Uint8List photo, String label, String number, VoidCallback retake, VoidCallback remove) =>
+      Stack(fit: StackFit.expand, children: [
+        Semantics(
+          button: true,
+          label: 'Retake: $label',
+          child: InkWell(onTap: retake, child: Image.memory(photo, fit: BoxFit.cover, gaplessPlayback: true)),
+        ),
+        Positioned(
+          left: 0,
+          bottom: 0,
+          child: Container(
+              color: C.ink,
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              child: Mono(number, size: 10, color: C.paper)),
+        ),
+        Positioned(
+          right: 0,
+          top: 0,
+          child: Semantics(
+            button: true,
+            label: 'Remove: $label',
+            child: InkWell(
+              onTap: remove,
+              child: Container(
+                color: C.ink,
+                padding: const EdgeInsets.all(3),
+                child: const Icon(Icons.close, size: 14, color: C.paper),
+              ),
+            ),
+          ),
+        ),
+      ]);
+
   Widget _check(String label, bool value, ValueChanged<bool> onChanged) => Rule(
         padding: const EdgeInsets.symmetric(vertical: 4),
         onTap: () => onChanged(!value),
@@ -299,7 +431,7 @@ class _ContributeScreenState extends State<ContributeScreen> {
             side: const BorderSide(color: C.ink, width: 2),
             activeColor: C.signal,
           ),
-          Text(label, style: T.lede),
+          Flexible(child: Text(label, style: T.lede)),
         ]),
       );
 
@@ -321,11 +453,18 @@ class _ContributeScreenState extends State<ContributeScreen> {
       const Text('Only these photos and details are sent, to ihateperfume.com. No account, no location.',
           style: T.lede),
       const SizedBox(height: 16),
-      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(child: _sentPhoto('Front', s.front)),
-        const SizedBox(width: 12),
-        Expanded(child: s.ingredients == null ? const SizedBox() : _sentPhoto('Ingredient list', s.ingredients!)),
-      ]),
+      _sentGroup('Front', [('Front', s.front)]),
+      if (s.ingredients.isNotEmpty)
+        _sentGroup('Ingredient list', [
+          for (final (i, p) in s.ingredients.indexed) (s.ingredients.length > 1 ? 'List ${i + 1}' : 'List', p),
+        ]),
+      if (s.extras.isNotEmpty)
+        _sentGroup('More of the package', [for (final (i, p) in s.extras.indexed) ('More ${i + 1}', p)]),
+      Mono(
+          '${s.photos.length} ${s.photos.length == 1 ? 'photo' : 'photos'} · '
+          '${(s.photos.fold(0, (n, p) => n + p.$2.length) / 1e6).toStringAsFixed(1)} MB',
+          size: 10,
+          color: C.muted),
       const SizedBox(height: 8),
       row('Barcode', s.validBarcode ?? 'None'),
       row('Name', s.trimmedName.isEmpty ? 'None' : s.trimmedName),
@@ -340,8 +479,22 @@ class _ContributeScreenState extends State<ContributeScreen> {
     ]);
   }
 
+  Widget _sentGroup(String title, List<(String, Uint8List)> photos) => Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Mono(title, size: 11),
+          const SizedBox(height: 6),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            for (var i = 0; i < 3; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              Expanded(child: i < photos.length ? _sentPhoto(photos[i].$1, photos[i].$2) : const SizedBox()),
+            ],
+          ]),
+        ]),
+      );
+
   Widget _sentPhoto(String label, Uint8List bytes) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SizedBox(height: 150, width: double.infinity, child: Image.memory(bytes, fit: BoxFit.cover, gaplessPlayback: true)),
+        AspectRatio(aspectRatio: 1, child: Image.memory(bytes, fit: BoxFit.cover, gaplessPlayback: true)),
         const SizedBox(height: 4),
         Mono('$label · ${(bytes.length / 1000).round()} KB', size: 10, color: C.muted),
       ]);

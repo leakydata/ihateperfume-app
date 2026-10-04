@@ -106,7 +106,7 @@ void main() {
         name: '  Brand   Kitchen Bags ',
         fragranceFree: true,
         front: front,
-        ingredients: list,
+        ingredients: [list],
         category: 'Laundry')); // ignored: it has a list
     expect(r.method, 'POST');
     expect(r.url.toString(), 'https://ihateperfume.com/wp-json/ihp-app/v1/submissions');
@@ -133,7 +133,7 @@ void main() {
         noList: true,
         category: 'Trash bags',
         front: front,
-        ingredients: list));
+        ingredients: [list]));
     expect(r.fields['barcode'], isNull);
     expect(r.fields['name']!.length, 120);
     expect(r.fields['no_list'], '1');
@@ -151,7 +151,7 @@ void main() {
       sent = req;
       return http.Response('{"ok": true, "ref": "S-7F3K2"}', 201);
     });
-    final r = await sendSubmission(Submission(barcode: '12345678', front: front, ingredients: list), client: c);
+    final r = await sendSubmission(Submission(barcode: '12345678', front: front, ingredients: [list]), client: c);
     expect(r.ok, isTrue);
     expect(r.ref, 'S-7F3K2');
     expect(sent.headers['content-type'], startsWith('multipart/form-data; boundary='));
@@ -174,6 +174,67 @@ void main() {
         client: MockClient((_) async => throw const SocketException('offline')));
     expect(down.ok, isFalse);
     expect(down.error, contains('Check your connection'));
+  });
+
+  Uint8List jpg(int n, {int size = 7}) => Uint8List(size)..[0] = n;
+  List<String> fieldsOf(Submission s) => buildSubmissionRequest(s).files.map((f) => f.field).toList();
+
+  test('photo fields for 2, 4, and 7 photos follow the contract, in order', () {
+    expect(fieldsOf(Submission(front: front, ingredients: [list])), ['front', 'ingredients']);
+    final four = Submission(front: front, ingredients: [jpg(1), jpg(2), jpg(3)]);
+    final r4 = buildSubmissionRequest(four);
+    expect(r4.files.map((f) => (f.field, f.filename)), [
+      ('front', 'front.jpg'),
+      ('ingredients', 'ingredients.jpg'),
+      ('ingredients_2', 'ingredients_2.jpg'),
+      ('ingredients_3', 'ingredients_3.jpg'),
+    ]);
+    expect(four.photos.map((p) => p.$2[0]), [front[0], 1, 2, 3]);
+    final seven = Submission(front: front, ingredients: [jpg(1), jpg(2), jpg(3)], extras: [jpg(4), jpg(5), jpg(6)]);
+    expect(fieldsOf(seven),
+        ['front', 'ingredients', 'ingredients_2', 'ingredients_3', 'extra_1', 'extra_2', 'extra_3']);
+    expect(seven.photos.map((p) => p.$2[0]).skip(1), [1, 2, 3, 4, 5, 6]);
+    expect(submissionProblem(seven), isNull);
+    // Extras without a list (trash bags: the sides matter); list photos are dropped when there's no list.
+    expect(fieldsOf(Submission(front: front, noList: true, ingredients: [list], extras: [jpg(4), jpg(5)])),
+        ['front', 'extra_1', 'extra_2']);
+  });
+
+  test('no gaps: removing a middle photo renumbers the rest', () {
+    final lists = [jpg(1), jpg(2), jpg(3)]..removeAt(1);
+    final extras = [jpg(4), jpg(5), jpg(6)]..removeAt(0);
+    final s = Submission(front: front, ingredients: lists, extras: extras);
+    expect(s.photos.map((p) => (p.$1, p.$2[0])).skip(1),
+        [('ingredients', 1), ('ingredients_2', 3), ('extra_1', 5), ('extra_2', 6)]);
+  });
+
+  test('too many photos or too many bytes are stopped before sending', () async {
+    var calls = 0;
+    final c = MockClient((_) async {
+      calls++;
+      return http.Response('{"ok": true}', 201);
+    });
+    final tooManyLists = Submission(front: front, ingredients: [jpg(1), jpg(2), jpg(3), jpg(4)]);
+    expect(submissionProblem(tooManyLists), contains('at most 3'));
+    expect(submissionProblem(Submission(front: front, noList: true, extras: List.generate(4, jpg))),
+        contains('at most 3'));
+    final oneTooBig = Submission(front: front, ingredients: [jpg(1, size: maxPhotoBytes + 1)]);
+    expect(submissionProblem(oneTooBig), contains('too big'));
+    final r = await sendSubmission(oneTooBig, client: c);
+    expect(r.ok, isFalse);
+    expect(r.error, contains('too big'));
+    expect((await sendSubmission(tooManyLists, client: c)).error, contains('at most 3'));
+    expect(calls, 0);
+  });
+
+  test('the whole-request limit', () {
+    // Seven photos at the per-photo limit fit in 18 MB; a tighter limit shows the whole request is checked.
+    final s = Submission(
+        front: jpg(0, size: maxPhotoBytes),
+        ingredients: List.generate(3, (i) => jpg(i, size: maxPhotoBytes)),
+        extras: List.generate(3, (i) => jpg(i, size: maxPhotoBytes)));
+    expect(submissionProblem(s), isNull);
+    expect(submissionProblem(s, maxBytes: 17000000), contains('too big to send together'));
   });
 
   test('the version sent matches pubspec.yaml', () {
