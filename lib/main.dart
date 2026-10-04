@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/about.dart';
 import 'screens/home.dart';
 import 'screens/legal.dart';
+import 'screens/my_list.dart';
 import 'screens/search.dart';
 import 'services.dart';
 import 'theme.dart';
@@ -163,7 +164,7 @@ class FirstRunNotice extends StatelessWidget {
   }
 }
 
-/// Bottom tabs: Scan, Search, Learn.
+/// Bottom tabs: Scan, Search, My list, Learn.
 class Shell extends StatefulWidget {
   const Shell({super.key});
   static final tab = ValueNotifier(0);
@@ -186,7 +187,7 @@ class _ShellState extends State<Shell> {
             child: Scaffold(
               body: SafeArea(
                 bottom: false,
-                child: IndexedStack(index: i, children: const [HomeScreen(), SearchScreen(), AboutScreen()]),
+                child: IndexedStack(index: i, children: const [HomeScreen(), SearchScreen(), MyListScreen(), AboutScreen()]),
               ),
               bottomNavigationBar: _Tabs(i),
             ),
@@ -203,6 +204,7 @@ class _Tabs extends StatelessWidget {
     const items = [
       (Icons.crop_free, 'Scan'),
       (Icons.search, 'Search'),
+      (Icons.bookmark_border, 'My list'),
       (Icons.menu_book_outlined, 'Learn'),
     ];
     return Container(
