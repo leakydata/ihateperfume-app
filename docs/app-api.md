@@ -113,6 +113,10 @@ it **on the phone first**, before Open Beauty Facts, Open Products Facts, and op
 sends its barcode anywhere. `GET /products/{barcode}` stays as the last fallback (products approved since the
 phone's last update).
 
+**Also used by the website:** `/label-decoder/`'s barcode lookup (barcode.js 0.2.0) reads `/products.json` first,
+same origin. Keep it public and its item shape stable (`barcode`, `name`, `ingredients`, `no_list`, `says`, `checked`,
+`evidence`), or tell the website session before changing it.
+
 ## `POST /reports` ("Wrong or missing ingredients? Report it")
 Sent only when the user taps "Just report" in the report sheet. `application/x-www-form-urlencoded`: `barcode`
 (8–14 digits), `source` (`obf` | `opf` | `fda` | `ihp`), `reason` (`not_ingredients` | `wrong_product` |
