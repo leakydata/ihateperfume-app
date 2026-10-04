@@ -222,6 +222,14 @@ class OcrFix {
         return;
       }
     }
+    // A missing comma before a slashed name: "Lauryl Lactate Acrylates/CI0-30 Alkyl Acrylate Crosspolymer".
+    if (parts.any((p) => p.kind != IssueKind.suggestion)) {
+      final f = _headTail(item);
+      if (f != null) {
+        out.add(_Fix(s, e, item, f.$1, f.$2));
+        return;
+      }
+    }
     out.addAll(parts);
   }
 
@@ -270,7 +278,7 @@ class OcrFix {
       out.add(Issue(s, e, raw, null, IssueKind.labelText));
       return;
     }
-    final f = _fix(raw, k);
+    final f = _fix(raw, k) ?? _headTail(raw);
     if (f != null) {
       if (f.$1 != raw) out.add(_Fix(s, e, raw, f.$1, f.$2));
       return;
@@ -329,12 +337,35 @@ class OcrFix {
     return null;
   }
 
+  static final _gap = RegExp(r'\s+');
+
+  /// A missing comma after a known name, before a misread one: split at a space into a head that is a known name
+  /// as written and a tail that is known or has a confident fix. A slash stays inside the tail
+  /// ("Acrylates/C10-30 Alkyl Acrylate Crosspolymer" is one name).
+  (String, double)? _headTail(String raw) {
+    for (final m in _gap.allMatches(raw)) {
+      final head = raw.substring(0, m.start), tail = raw.substring(m.end);
+      if (head.contains(_hasParts)) break; // only a plain name before the gap
+      final hk = Decoder.norm(head), tk = Decoder.norm(tail);
+      if (_letters(hk) < 4 || _letters(tk) < 4 || !_known.contains(hk)) continue;
+      final tw = tk.split(' ');
+      if (_continues.contains(tw.first)) continue; // "... Seed Oil" carries the name on
+      if (_known.contains(tk)) return ('$head, $tail', 1);
+      // A misread tail: only a name of two or more words, so one short word is never guessed ("Sodium Octrate").
+      if (tw.length < 2) continue;
+      final f = _fix(tail, tk);
+      if (f != null && !f.$1.contains(', ')) return ('$head, ${f.$1}', 1 + f.$2);
+    }
+    return null;
+  }
+
   // ---------- label text ----------
 
   static const _states = 'AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|'
       'NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY';
   static final _labelSigns = [
     RegExp(r'[0-9]{7,}'), // lot number or barcode
+    RegExp(r'''\b[0-9]{1,6}(?:[ "'’.][0-9]{2,6}){2,}\b'''), // a barcode read with gaps or quotes: 3 02993"93816
     RegExp(r'\b(?:' + _states + r')\.?,?\s+[0-9]{5}(?:-[0-9]{4})?\b'), // state and zip
     RegExp(r'\(?\b[0-9]{3}\)?[\s.-][0-9]{3}[\s.-][0-9]{4}\b'), // phone
     RegExp(r'www\.|https?:|\b[a-z0-9-]+\.(?:com|net|org)\b|\S@\S+\.[a-z]{2,}', caseSensitive: false),

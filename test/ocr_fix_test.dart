@@ -131,6 +131,30 @@ void main() {
     ]);
   });
 
+  test('a second scan of the same label: a missing comma before a slashed name, a barcode read with gaps', () {
+    final text = File('test/fixtures/ocr-cetaphil-body-wash-2.txt').readAsStringSync();
+    expect(issues(text), [
+      'suggestion: LAURYL LACTATE ACRYLATES/CIO-30 ALKYL ACRYLATE CROSSPOLYMER -> '
+          'LAURYL LACTATE, ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER',
+      'unknown: SODIUM OCTRATE', // citrate or nitrate? No guessing.
+      'labelText: 3 02993"93816 GALDERMA Distributed by: Galderma laboratories',
+      'labelText: LL2 Dallas',
+      'labelText: TX 75201 USA All trademarks are the property of their respective ewners Made in Germany '
+          'cetaghil.oonm P202418-0',
+    ]);
+    final fixed = OcrFix.applyAll(text, fix.suggest(text));
+    final clean = OcrFix.removeAll(fixed, [for (final i in fix.check(fixed)) if (i.kind == IssueKind.labelText) i]);
+    expect(clean, contains('GLYCOL DISTEARATE, LAURYL LACTATE, ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER, CITRIC'));
+    expect(issues(clean), ['unknown: SODIUM OCTRATE']);
+    expect(decoder.decode(clean).items.last, 'SODIUM HYDROXIDE');
+    // After the app's own cleanup (which cuts at "Distributed"), the barcode is still split off the name.
+    expect(issues(cleanOcr(text)).last, 'labelText: 3 02993"93816 GALDERMA');
+    // The same split with no slash; a one-word misread tail is left alone.
+    expect(sug('Water, Lauryl Lactate Cetearyl Alcohoi'),
+        {'Lauryl Lactate Cetearyl Alcohoi': 'Lauryl Lactate, Cetearyl Alcohol'});
+    expect(issues('Water, Sodium Octrate'), ['unknown: Sodium Octrate']);
+  });
+
   test('label text: addresses, numbers, codes, web addresses, companies, directions', () {
     expect(
         issues('Water, P500, 0299393816, Distributed by Example Co., Dallas, TX 75201, www.example.com, '
