@@ -4,6 +4,7 @@ import '../services.dart';
 import '../theme.dart';
 import 'ingredient.dart';
 import 'legal.dart';
+import 'data_setting.dart';
 import 'wanted.dart';
 
 /// "Learn": what the app promises, where the data comes from, and the required attribution.
@@ -77,6 +78,7 @@ class AboutScreen extends StatelessWidget {
           link('openFDA', 'https://open.fda.gov'),
           h('Settings'),
           const WantedSetting(),
+          const DataSetting(),
           h('Terms and privacy'),
           p('Information, not medical advice. Never a guarantee: always read the package.'),
           page('Terms and disclaimer', termsDoc),
