@@ -217,7 +217,8 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
     final x = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (x == null || !mounted) return;
     setState(() => _busy = 'Reading the list\non your phone');
-    await _read(x.path, delete: false);
+    // The picker hands us a copy in the app's own cache: delete that copy after reading, never the original.
+    await _read(x.path, delete: x.path.contains('/com.ihateperfume.ihateperfume/cache/'));
   }
 
   Future<void> _read(String path, {required bool delete}) async {
