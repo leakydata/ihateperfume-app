@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'data_update.dart';
 import 'screens/about.dart';
 import 'screens/finds.dart';
 import 'screens/home.dart';
@@ -23,6 +24,7 @@ void main() {
   });
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const App());
+  scheduleDataUpdateCheck(); // a few seconds after the app is up, at most once a day
 }
 
 class App extends StatefulWidget {

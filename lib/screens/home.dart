@@ -127,11 +127,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           for (final s in _recent.take(20)) _RecentRow(s, _onList[s.text] ?? 0),
           const SizedBox(height: 24),
-          Text(
+          ValueListenableBuilder(valueListenable: dataStatus, builder: (context, _, _) => Text(
             'Ingredient data from ihateperfume.com, ${_date(dataVersion)} · '
             '${_thousands(decoder.flaggedNames.length)} flagged ingredients',
             style: T.src(size: 11),
-          ),
+          )),
         ]),
       ),
     ]);

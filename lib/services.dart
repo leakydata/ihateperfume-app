@@ -1,34 +1,65 @@
-/// Loading the bundled decoder data, recent scans (kept only on this phone), and the barcode lookup.
+/// The ingredient data and spelling index, recent scans (kept only on this phone), and the barcode lookup.
 library;
 
+import 'dart:async';
 import 'dart:convert';
-import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'data_update.dart';
 import 'engine/decoder.dart';
 import 'engine/ocr_fix.dart';
 
+// The data's version and source, and a check for newer data (for the home footer and the Learn screen).
+export 'data_update.dart' show DataCheck, DataStatus, checkForDataUpdate, dataStatus;
+
+/// The decoder in use: the bundled data, or newer data downloaded from the site (see data_update.dart).
 late Decoder decoder;
 
-/// The data version (decoder-data.json "v", e.g. 2026-09-27).
+/// The data version (decoder-data.json "v", e.g. 2026-09-27). [dataStatus] has it with its source, to listen to.
 String dataVersion = '';
 
-Future<void> loadDecoder() async {
-  final a = await rootBundle.loadString('assets/data/decoder.json');
-  final b = await rootBundle.loadString('assets/data/decoder-data.json');
-  final c = await rootBundle.loadString('assets/data/inci-vocab.json');
-  decoder = await Isolate.run(() => Decoder.fromJson(a, b, c));
-  dataVersion = (jsonDecode(b) as Map)['v'] as String? ?? '';
-  // The spelling index takes a moment to build, so it builds in the background after startup.
-  spelling = Isolate.run(() => OcrFix(Decoder.fromJson(a, b, c)));
+/// Load the newest valid ingredient data (downloaded or bundled). The splash waits for this.
+Future<void> loadDecoder() => loadData();
+
+/// The User-Agent every request to ihateperfume.com and the product databases carries.
+String get appUserAgent => _userAgent;
+
+// ---------- spelling suggestions: built when first needed, let go when not used for a while ----------
+
+Future<OcrFix>? _spelling;
+Timer? _spellingIdle;
+const _spellingKeep = Duration(minutes: 3);
+
+/// Spelling suggestions for the review screen. The index (about 2 MB) is built from the loaded decoder on first
+/// use, which takes a moment, and dropped a few minutes after the last use so it isn't held while it's not needed.
+Future<OcrFix> get spelling {
+  if (_spellingSet) return _spelling!;
+  _spellingIdle?.cancel();
+  _spellingIdle = Timer(_spellingKeep, dropSpelling);
+  return _spelling ??= OcrFix.build(decoder)
+    ..then((_) {}, onError: (_) => dropSpelling());
 }
 
-/// Spelling suggestions for the review screen (ready a moment after the decoder).
-late Future<OcrFix> spelling;
+bool _spellingSet = false;
+
+/// Use this index (tests). It isn't dropped when idle.
+set spelling(Future<OcrFix> f) {
+  _spellingIdle?.cancel();
+  _spellingIdle = null;
+  _spellingSet = true;
+  _spelling = f;
+}
+
+/// Let the spelling index go (screens that hold it keep it until they close). The next use rebuilds it.
+void dropSpelling() {
+  _spellingIdle?.cancel();
+  _spellingIdle = null;
+  _spellingSet = false;
+  _spelling = null;
+}
 
 // ---------- recent scans: shared preferences on the phone, excluded from Android backup ----------
 
