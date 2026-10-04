@@ -1,0 +1,45 @@
+{
+ "meta": {
+  "results": {
+   "skip": 0,
+   "limit": 1,
+   "total": 3
+  }
+ },
+ "results": [
+  {
+   "active_ingredient": [
+    "Drug Facts Active ingredient Aluminum Sesquichlorohydrate (16%)"
+   ],
+   "purpose": [
+    "Purpose antiperspirant"
+   ],
+   "inactive_ingredient": [
+    "Inactive ingredients Cyclopentasiloxane, Stearyl Alcohol, PPG-14 Butyl Ether, C12-15 Alkyl Benzoate, Mineral Oil, Glycine, Hydrogenated Castor Oil, Fragrance (Parfum), Calcium Chloride, Talc, Polyethylene, PEG-8 Distearate, Sodium Starch Octenylsuccinate, Maltodextrin, Hydrolyzed Corn Starch Octenylsuccinate, BHT, Silica, Alpha-Isomethyl Ionone, Benzyl Alcohol, Benzyl Cinnamate, Benzyl Salicylate, Cinnamyl Alcohol, Citral, Citronellol, Coumarin, Geraniol, Hexyl Cinnamal, Limonene, Linalool"
+   ],
+   "set_id": "108146d4-e5d4-1ffd-e063-6294a90aa4b9",
+   "effective_time": "20240203",
+   "openfda": {
+    "brand_name": [
+     "Degree"
+    ],
+    "generic_name": [
+     "ADVANCED SEXY INTRIGUE 72H ANTIPERSPIRANT DEODORANT"
+    ],
+    "manufacturer_name": [
+     "Conopco Inc. d/b/a/ Unilever"
+    ],
+    "product_ndc": [
+     "64942-2257"
+    ],
+    "package_ndc": [
+     "64942-2257-1",
+     "64942-2257-2"
+    ],
+    "upc": [
+     "0079400017437"
+    ]
+   }
+  }
+ ]
+}

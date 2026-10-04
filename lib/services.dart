@@ -36,7 +36,7 @@ class Scan {
   final String name;
   final String? barcode;
   final String text;
-  final String source; // 'obf', 'opf', 'photo', 'typed'
+  final String source; // 'obf', 'opf', 'fda', 'photo', 'typed'
   final DateTime at;
   final String tag; // summary chip, e.g. "3 scent"
   final int level;
@@ -110,9 +110,13 @@ class Product {
   final String barcode;
   final String name;
   final String? ingredients;
-  final String source; // 'obf' or 'opf'
+  final String source; // 'obf', 'opf', or 'fda'
   const Product(this.barcode, this.name, this.ingredients, this.source);
-  String get sourceName => source == 'obf' ? 'Open Beauty Facts' : 'Open Products Facts';
+  String get sourceName => switch (source) {
+        'obf' => 'Open Beauty Facts',
+        'opf' => 'Open Products Facts',
+        _ => 'openFDA',
+      };
 }
 
 class LookupError implements Exception {
@@ -123,9 +127,11 @@ class LookupError implements Exception {
 const _hosts = {'obf': 'world.openbeautyfacts.org', 'opf': 'world.openproductsfacts.org'};
 const _fields = 'product_name,product_name_en,brands,ingredients_text,ingredients_text_en';
 const _userAgent = 'IHatePerfume-Android/1.0 (https://ihateperfume.com)';
+const _timeout = Duration(seconds: 10);
 
-/// Open Beauty Facts first, then Open Products Facts. Returns the first product that has an ingredient list,
-/// else the first one found without one, else null. Throws [LookupError] if neither could be reached.
+/// Open Beauty Facts, then Open Products Facts, then the FDA's drug labels (for US over-the-counter products such
+/// as sunscreen and antiperspirant). Returns the first product that has an ingredient list, else the first one
+/// found without one, else null. Throws [LookupError] if none of them could be reached.
 Future<Product?> lookUp(String barcode, {http.Client? client}) async {
   final c = client ?? http.Client();
   Product? nameOnly;
@@ -134,7 +140,7 @@ Future<Product?> lookUp(String barcode, {http.Client? client}) async {
     for (final e in _hosts.entries) {
       final uri = Uri.https(e.value, '/api/v2/product/$barcode.json', {'fields': _fields});
       try {
-        final res = await c.get(uri, headers: {'User-Agent': _userAgent}).timeout(const Duration(seconds: 10));
+        final res = await c.get(uri, headers: {'User-Agent': _userAgent}).timeout(_timeout);
         reached++;
         if (res.statusCode != 200) continue;
         final j = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
@@ -155,11 +161,168 @@ Future<Product?> lookUp(String barcode, {http.Client? client}) async {
         continue;
       }
     }
+    final (fda, fdaReached) = await _lookUpFda(barcode, c);
+    if (fdaReached) reached++;
+    if (fda?.ingredients != null) return fda;
+    nameOnly ??= fda;
   } finally {
     if (client == null) c.close();
   }
-  if (reached == 0) throw const LookupError('Couldn’t reach Open Beauty Facts. Check your connection.');
+  if (reached == 0) throw const LookupError('Couldn’t reach the product databases. Check your connection.');
   return nameOnly;
+}
+
+// ---------- openFDA drug labels (public domain, no key; 240 requests a minute, 1,000 a day per IP) ----------
+
+/// The 13-digit form openFDA lists UPCs in: a 12-digit UPC-A gets a leading zero, an EAN-13 stays as is, and a
+/// GTIN-14 that starts with 0 loses it. Null for other lengths (EAN-8, UPC-E).
+String? fdaUpc(String barcode) {
+  if (!RegExp(r'^\d+$').hasMatch(barcode)) return null;
+  return switch (barcode.length) {
+    12 => '0$barcode',
+    13 => barcode,
+    14 when barcode.startsWith('0') => barcode.substring(1),
+    _ => null,
+  };
+}
+
+/// A drug's UPC-A often holds its National Drug Code: "3", then the 10 NDC digits, then the check digit. The
+/// dashes aren't in the barcode, so this gives the three ways they can fall (4-4-2, 5-3-2, 5-4-1). Empty if the
+/// barcode isn't a UPC-A starting with 3.
+List<String> ndcCandidates(String barcode) {
+  final u = fdaUpc(barcode);
+  if (u == null || !u.startsWith('03')) return const [];
+  final d = u.substring(2, 12);
+  return [
+    '${d.substring(0, 4)}-${d.substring(4, 8)}-${d.substring(8)}',
+    '${d.substring(0, 5)}-${d.substring(5, 8)}-${d.substring(8)}',
+    '${d.substring(0, 5)}-${d.substring(5, 9)}-${d.substring(9)}',
+  ];
+}
+
+/// One openFDA query, `search` already in openFDA's syntax. Null if nothing matched; throws if it couldn't be
+/// reached.
+Future<Map<String, dynamic>?> _fdaFirst(http.Client c, String endpoint, String search) async {
+  // Built by hand: openFDA wants the quotes and the + between terms as they are, not percent-encoded.
+  final uri = Uri.parse('https://api.fda.gov/drug/$endpoint.json?search=$search&limit=1');
+  final res = await c.get(uri, headers: {'User-Agent': _userAgent}).timeout(_timeout);
+  if (res.statusCode != 200) return null; // 404 is openFDA's "No matches found"
+  final j = jsonDecode(utf8.decode(res.bodyBytes));
+  if (j is! Map || j['results'] is! List || (j['results'] as List).isEmpty) return null;
+  return (j['results'] as List).first as Map<String, dynamic>;
+}
+
+/// The FDA label for this barcode: by its UPC, else by the NDC inside it. Returns (product or null, reached).
+/// Any error counts as not found.
+Future<(Product?, bool)> _lookUpFda(String barcode, http.Client c) async {
+  final upc = fdaUpc(barcode);
+  if (upc == null) return (null, false);
+  var reached = false;
+  try {
+    var label = await _fdaFirst(c, 'label', 'openfda.upc:"$upc"');
+    reached = true;
+    final ndcs = ndcCandidates(barcode);
+    if (label == null && ndcs.isNotEmpty) {
+      // One request for all three dash patterns (a space between terms means "or").
+      final pkg = await _fdaFirst(c, 'ndc', ndcs.map((n) => 'packaging.package_ndc:"$n"').join('+'));
+      final productNdc = pkg?['product_ndc'];
+      if (productNdc is String && RegExp(r'^[\d-]+$').hasMatch(productNdc)) {
+        label = await _fdaFirst(c, 'label', 'openfda.product_ndc:"$productNdc"');
+      }
+    }
+    return (label == null ? null : parseFdaLabel(barcode, label), reached);
+  } on Exception {
+    return (null, reached);
+  }
+}
+
+/// A product from an openFDA drug label: the name, and its active then inactive ingredients. A label without an
+/// inactive ingredient list counts as no ingredient list.
+Product? parseFdaLabel(String barcode, Map<String, dynamic> label) {
+  String joined(Object? v) =>
+      v is List ? v.whereType<String>().join(' ').trim() : (v is String ? v.trim() : '');
+  final openfda = label['openfda'] is Map ? label['openfda'] as Map : const {};
+  String first(String k) {
+    final v = openfda[k];
+    return v is List && v.isNotEmpty && v.first is String ? (v.first as String).trim() : '';
+  }
+
+  final actives = fdaActives(joined(label['active_ingredient']), joined(label['purpose']));
+  final inactive = fdaInactive(joined(label['inactive_ingredient']));
+
+  var name = first('brand_name');
+  final generic = first('generic_name');
+  // generic_name is often just the active ingredients ("ZINC OXIDE"), but sometimes the product's own name.
+  final g = generic.toLowerCase();
+  if (generic.isNotEmpty &&
+      g != name.toLowerCase() &&
+      !actives.any((a) => g.contains(a.toLowerCase())) &&
+      !name.toLowerCase().contains(g)) {
+    name = [name, _titleCase(generic)].where((x) => x.isNotEmpty).join(' ');
+  }
+  if (name.isEmpty) name = first('manufacturer_name');
+  if (name.isEmpty && inactive.isEmpty) return null;
+  return Product(barcode, _titleCase(name), inactive.isEmpty ? null : [...actives, inactive].join(', '), 'fda');
+}
+
+String _titleCase(String s) => s == s.toUpperCase() && s.contains(RegExp('[A-Z]'))
+    ? s.toLowerCase().replaceAllMapped(RegExp(r"(^|[\s/(-])([a-z])"), (m) => '${m[1]}${m[2]!.toUpperCase()}')
+    : s;
+
+/// The inactive ingredient list without its heading: "Inactive ingredients: Water, …" → "Water, …".
+String fdaInactive(String s) => s
+    .replaceFirst(RegExp(r'^.*?\binactive\s+ingredients?\b\s*[:.]?\s*', caseSensitive: false), '')
+    .replaceFirst(RegExp(r'[\s.]+$'), '')
+    .trim();
+
+/// Active ingredient names, without the heading, strengths, or purposes:
+/// "Active ingredients Purpose Avobenzone 3% Sunscreen Homosalate 10% Sunscreen" → [Avobenzone, Homosalate].
+List<String> fdaActives(String active, String purpose) {
+  final heading = RegExp(r'^.*?\bactive\s+ingredients?\b\s*(\([^)]*\))?\s*[:.]?\s*(purposes?\b\s*[:.]?)?\s*',
+      caseSensitive: false);
+  var t = active.replaceFirst(heading, '');
+  // The purpose column, when it's printed separately ("Purpose Sunscreen"), to cut out of the names.
+  final purposeText = purpose.toLowerCase().contains('active ingredient')
+      ? ''
+      : purpose.replaceFirst(RegExp(r'^\s*purposes?\b\s*[:.]?\s*', caseSensitive: false), '').toLowerCase();
+  final strength = RegExp(r'\(?\s*\d+(?:\.\d+)?\s*%\s*(?:w/w|w/v|v/v)?\s*\)?', caseSensitive: false);
+  final parts = t.split(strength);
+  if (parts.length == 1) {
+    t = t.replaceFirst(RegExp(r'[\s.,;]+$'), '').trim();
+    return t.isEmpty || t.length > 80 ? const [] : [t];
+  }
+  // Whatever follows the last strength is a purpose ("Sunscreen"); the same words start the next name too.
+  final trailing = parts.last.replaceAll(RegExp(r'^[\s,;.]+|[\s,;.]+$'), '').toLowerCase();
+  final names = <String>[];
+  for (var i = 0; i < parts.length - 1; i++) {
+    var n = parts[i].replaceAll(RegExp(r'^[\s,;.]+|[\s,;.]+$'), '');
+    if (i > 0) {
+      final words = n.split(RegExp(r'\s+'));
+      // Drop leading words that are the purpose of the previous ingredient.
+      for (var k = words.length - 1; k >= 1; k--) {
+        final lead = words.take(k).join(' ').toLowerCase();
+        if (lead == trailing || (purposeText.isNotEmpty && purposeText.contains(lead))) {
+          n = words.skip(k).join(' ');
+          break;
+        }
+      }
+    }
+    if (n.isNotEmpty) names.add(n);
+  }
+  return names;
+}
+
+/// GS1 company prefixes (as the first digits of a 13-digit code) of Procter & Gamble, checked against P&G
+/// products in openFDA and Open Beauty Facts: Crest, Secret, Scope (0037000), Old Spice (0012044), Secret, Dawn,
+/// Crest (0030772), Gillette (0047400), Olay (0075609), Pantene (0080878), and Vicks (0323900).
+const _pgPrefixes = ['0037000', '0012044', '0030772', '0047400', '0075609', '0080878', '0323900'];
+
+/// P&G's SmartLabel page for a P&G barcode, where P&G lists the product's ingredients. Opened in the browser only
+/// when the user taps; the app never fetches it (P&G's terms forbid scraping). Null for other makers.
+String? makerPage(String barcode) {
+  final g13 = fdaUpc(barcode);
+  if (g13 == null || !_pgPrefixes.any(g13.startsWith)) return null;
+  return 'https://smartlabel.pg.com/en-us/0$g13.html';
 }
 
 /// Tidy text read from a photo of a label: start at "Ingredients:", and join lines broken mid-ingredient.

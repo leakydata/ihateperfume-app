@@ -1,5 +1,6 @@
 /// The scanner: barcode (ML Kit barcode scanning) or ingredient list (camera photo + ML Kit text recognition).
-/// Both run on the phone. Only a barcode number is ever sent anywhere, to Open Beauty Facts and Open Products Facts.
+/// Both run on the phone. Only a barcode number is ever sent anywhere, to Open Beauty Facts, Open Products Facts,
+/// and the FDA's openFDA service.
 library;
 
 import 'dart:io';
@@ -13,6 +14,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../services.dart';
 import '../theme.dart';
+import 'ingredient.dart' show openLink;
 import 'result.dart';
 import 'review.dart';
 
@@ -32,6 +34,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
   late ScanMode _mode = widget.mode;
   String? _busy; // message while looking up or reading
   String? _notice; // e.g. "not found, photograph the list"
+  String? _maker; // the maker's ingredient page for the barcode in the notice, opened only on tap
   String? _barcode; // carried into the photo step when a barcode had no ingredient list
   String? _name;
   bool _torch = false;
@@ -118,6 +121,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
     setState(() {
       _mode = m;
       _notice = null;
+      _maker = null;
     });
     _startMode();
   }
@@ -138,7 +142,10 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
   }
 
   Future<void> _lookUp(String code) async {
-    setState(() => _busy = 'Looking up $code\nin Open Beauty Facts');
+    setState(() {
+      _busy = 'Looking up $code';
+      _maker = null;
+    });
     try {
       final p = await lookUp(code);
       if (!mounted) return;
@@ -152,8 +159,13 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
         _barcode = code;
         _name = p?.name.isNotEmpty == true ? p!.name : null;
         _notice = p == null
-            ? 'Barcode $code isn’t in Open Beauty Facts or Open Products Facts yet. Photograph the ingredient list instead.'
-            : '${p.sourceName} knows ${p.name.isEmpty ? 'this product' : p.name}, but not its ingredients. Photograph the list instead.';
+            ? 'Barcode $code isn’t in Open Beauty Facts, Open Products Facts, or the FDA’s drug labels. Photograph the '
+                'ingredient list instead.'
+            : p.source == 'fda'
+                ? 'The FDA drug label for ${p.name.isEmpty ? 'this product' : p.name} has no inactive ingredient list. '
+                    'Photograph the list instead.'
+                : '${p.sourceName} knows ${p.name.isEmpty ? 'this product' : p.name}, but not its ingredients. Photograph the list instead.';
+        _maker = makerPage(code);
         _mode = ScanMode.list;
       });
       _handling = false;
@@ -400,7 +412,17 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
               padding: const EdgeInsets.all(12),
               decoration: const BoxDecoration(
                   color: C.label, border: Border(left: BorderSide(color: C.signal, width: 6))),
-              child: Text(_notice!, style: T.lede.copyWith(fontSize: 14)),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(_notice!, style: T.lede.copyWith(fontSize: 14)),
+                if (_maker != null)
+                  InkWell(
+                    onTap: () => openLink(context, _maker!),
+                    child: const Padding(
+                      padding: EdgeInsets.only(top: 8, bottom: 2),
+                      child: MonoLink('See the maker’s ingredient page', size: 11),
+                    ),
+                  ),
+              ]),
             ),
           ),
         Positioned(
@@ -414,7 +436,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
             Text(
               list
                   ? 'Read on your phone. The photo never leaves it.'
-                  : 'Read on your phone. Only the barcode number is sent, to Open Beauty Facts.',
+                  : 'Read on your phone. Only the barcode number is sent, to look the product up.',
               textAlign: TextAlign.center,
               style: T.src(size: 12, color: const Color(0xFFBBBBBB)),
             ),

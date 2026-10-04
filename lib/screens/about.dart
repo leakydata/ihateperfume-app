@@ -41,8 +41,8 @@ class AboutScreen extends StatelessWidget {
             'No account, no ads, no tracking. Free.',
             'Barcode reading, text recognition, and ingredient matching run on this phone.',
             'Your photos never leave the phone. They’re deleted as soon as the text is read.',
-            'Only a scanned barcode number is sent, to Open Beauty Facts and then Open Products Facts, to find the '
-                'product. Nothing else goes anywhere.',
+            'Only a scanned barcode number is sent, to Open Beauty Facts, then Open Products Facts, then the FDA’s '
+                'openFDA service, to find the product. Nothing else goes anywhere.',
             'Recent scans are stored only on this phone and left out of phone backups.',
             'We never say a product is “safe.” Not on a list doesn’t mean safe; it may never have been assessed.',
           ])
@@ -61,11 +61,14 @@ class AboutScreen extends StatelessWidget {
               'annexes, EU CLP, IARC, the EU endocrine disruptor lists, IFRA, and FDA’s PFAS report), the Campaign '
               'for Safe Cosmetics, and graded research. Data version $dataVersion.'),
           p('Product ingredient lists come from Open Beauty Facts and Open Products Facts, made by volunteers and '
-              'available under the Open Database License (ODbL). Thank you to everyone who adds products there.'),
+              'available under the Open Database License (ODbL). Thank you to everyone who adds products there. '
+              'For over-the-counter drugs such as sunscreen and antiperspirant, they also come from FDA drug labels '
+              'through openFDA (public domain).'),
           link('Label decoder on ihateperfume.com', 'https://ihateperfume.com/label-decoder/'),
           link('Open Beauty Facts', 'https://world.openbeautyfacts.org'),
           link('Open Products Facts', 'https://world.openproductsfacts.org'),
           link('Open Database License (ODbL)', 'https://opendatacommons.org/licenses/odbl/1-0/'),
+          link('openFDA', 'https://open.fda.gov'),
           h('Terms and privacy'),
           p('Information, not medical advice. Never a guarantee: always read the package.'),
           page('Terms and disclaimer', termsDoc),

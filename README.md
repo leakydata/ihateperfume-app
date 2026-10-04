@@ -16,7 +16,8 @@ ingredient data and reviews submitted products.
 
 ## What it does (first version)
 - **Scan a barcode** (ML Kit, on the phone): the number is looked up in Open Beauty Facts, then Open Products
-  Facts. If there's no ingredient list, it goes straight to photographing one.
+  Facts, then FDA drug labels (openFDA) for over-the-counter drugs such as sunscreen. For P&G brands there's also a
+  link to the maker's ingredient page (opened only on tap). If there's no ingredient list, it goes straight to photographing one.
 - **Photograph the ingredients** (ML Kit text recognition, on the phone), or type/paste them. The text it read is
   shown for checking: it lists only the items it didn't recognize, with a suggested fix for misreads ("SODUM
   HYDROKDE" → Sodium Hydroxide), Edit for the rest, and Remove for label text such as addresses.
@@ -35,7 +36,8 @@ IBM Plex Mono for labels.
 ## Data
 - Ingredient matching: the website label decoder's dataset (`decoder-data.json`, about 140 KB compressed), bundled
   for offline use and refreshed from ihateperfume.com.
-- Barcodes: Open Beauty Facts and Open Products Facts (ODbL, credit required), then our own reviewed submissions.
+- Barcodes: Open Beauty Facts and Open Products Facts (ODbL, credit required), then openFDA drug labels (public
+  domain), then our own reviewed submissions.
 
 ## License
 GPL-3.0 with the additional terms in `ADDITIONAL-TERMS.md`: keep the credit to ihateperfume.com, mark modified

@@ -14,6 +14,7 @@ import 'scanner.dart';
 const sourceNames = {
   'obf': 'From Open Beauty Facts',
   'opf': 'From Open Products Facts',
+  'fda': 'From FDA drug label',
   'photo': 'From your photo',
   'typed': 'Typed in',
 };
@@ -96,6 +97,7 @@ class _ResultScreenState extends State<ResultScreen> {
   Widget build(BuildContext context) {
     final r = _r;
     final check = checkList(decoder, r, _list);
+    final maker = widget.barcode == null ? null : makerPage(widget.barcode!);
     final meta = [
       sourceNames[widget.source] ?? '',
       if (widget.barcode != null) 'Barcode ${widget.barcode}',
@@ -191,6 +193,19 @@ class _ResultScreenState extends State<ResultScreen> {
                       'Ingredient list from ${widget.source == 'obf' ? 'Open Beauty Facts' : 'Open Products Facts'} '
                       '(ODbL), written by volunteers. Check it matches your package: formulas change.',
                       style: T.src(),
+                    ),
+                  if (widget.source == 'fda')
+                    Text(
+                      'Ingredient list from the FDA drug label (public domain). Check it matches your package: '
+                      'formulas change.',
+                      style: T.src(),
+                    ),
+                  if (maker != null)
+                    InkWell(
+                      onTap: () => openLink(context, maker),
+                      child: const Padding(
+                          padding: EdgeInsets.only(top: 10),
+                          child: MonoLink('See the maker’s ingredient page')),
                     ),
                   InkWell(
                     onTap: () => Navigator.of(context).push(MaterialPageRoute(

@@ -1,0 +1,41 @@
+{
+ "meta": {
+  "results": {
+   "skip": 0,
+   "limit": 1,
+   "total": 1
+  }
+ },
+ "results": [
+  {
+   "active_ingredient": [
+    "Active ingredient Benzoyl peroxide 10%"
+   ],
+   "purpose": [
+    "Purpose Acne medication"
+   ],
+   "inactive_ingredient": [
+    "Inactive ingredients water, cetyl alcohol, petrolatum, acrylates/C10-30 alkyl acrylate crosspolymer, zinc lactate, steareth-2, glycerin, potassium cetyl phosphate, xanthan gum, benzyl alcohol, fragrance, disodium EDTA, laureth-4, BHT, sodium hydroxide, lactic acid, menthol"
+   ],
+   "set_id": "04514cbb-6041-4bd5-9ab9-31312b0d8f19",
+   "effective_time": "20260206",
+   "openfda": {
+    "brand_name": [
+     "Acne Cleanser"
+    ],
+    "generic_name": [
+     "BENZOYL PEROXIDE"
+    ],
+    "manufacturer_name": [
+     "Walmart, Inc."
+    ],
+    "product_ndc": [
+     "49035-264"
+    ],
+    "package_ndc": [
+     "49035-264-56"
+    ]
+   }
+  }
+ ]
+}

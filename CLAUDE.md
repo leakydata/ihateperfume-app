@@ -30,7 +30,9 @@ autism/ADHD app uses it). Tagline "Scan it. Unmask it." The owner also wants a s
   needs Playwright, e.g. run from a folder where `require('playwright')` resolves).
 - Data: `python3 tool/fetch_data.py` copies decoder.json, decoder-data.json, inci-vocab.json from the live site
   into assets/data. Later the app refreshes them from the site (no store release needed for data).
-- Barcodes: Open Beauty Facts / Open Products Facts (US coverage is thin: ~2.3k cosmetics and ~230 household
+- Barcodes: Open Beauty Facts / Open Products Facts, then openFDA drug labels (UPC, else the NDC inside a UPC-A
+  starting with 3; fixtures in test/fixtures/fda). P&G barcodes get a tap-only SmartLabel link (`makerPage`); never
+  fetch maker pages from the app. (OBF/OPF US coverage is thin: ~2.3k cosmetics and ~230 household
   products with ingredient lists), then photograph the list, then our moderated submissions.
 
 ## App layout

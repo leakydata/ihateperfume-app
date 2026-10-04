@@ -4,7 +4,7 @@
 
 Last updated: October 3, 2026
 
-These terms cover the I Hate Perfume app from ihateperfume.com. By using the app, you agree to them. If you don’t agree, please don’t use the app.
+These terms cover the I Hate Perfume app from ihateperfume.com. By using the app, you agree to them. If you don’t agree, please don’t use the app. These terms are also published at https://ihateperfume.com/app-terms/.
 
 ## Information, not medical advice
 
@@ -19,7 +19,7 @@ In an emergency, call 911 or your local emergency number.
 The app never says a product is “safe,” and nothing in it guarantees that a product is free of fragrance or of any other ingredient.
 
 - Ingredient flags come from the sources named next to each flag. Those lists may be incomplete. An ingredient that isn’t on any list hasn’t been shown to be safe; it may never have been assessed.
-- Labels and formulas change, sometimes without a new barcode. Product data from Open Beauty Facts and Open Products Facts is added by volunteers and may be wrong, incomplete, or out of date.
+- Labels and formulas change, sometimes without a new barcode. Product data from Open Beauty Facts and Open Products Facts is added by volunteers and may be wrong, incomplete, or out of date. FDA drug labels come from the makers and may not match the package you have.
 - Text recognition can misread a label, and a typed list can have typos. Check what the app read against the package.
 
 Always read the actual package before you buy or use a product.
@@ -42,13 +42,15 @@ Product names, brand names, and trademarks shown in the app belong to their owne
 
 ## Data and links
 
-Product names and ingredient lists come from Open Beauty Facts and Open Products Facts, under the Open Database License (ODbL). Ingredient flags come from the ihateperfume.com label decoder, which names the official source of each flag.
+Product names and ingredient lists come from Open Beauty Facts and Open Products Facts, under the Open Database License (ODbL), and for over-the-counter drugs such as sunscreen and antiperspirant, from FDA drug labels through the U.S. Food and Drug Administration’s openFDA service, which are in the public domain. Ingredient flags come from the ihateperfume.com label decoder, which names the official source of each flag.
 
-Links to other websites, such as ihateperfume.com, EWG, and official sources, open in your browser only when you tap them. Those sites have their own terms and privacy policies.
+Links to other websites, such as ihateperfume.com, EWG, official sources, and a maker’s ingredient page, open in your browser only when you tap them. Those sites have their own terms and privacy policies.
 
 - [Open Beauty Facts](https://world.openbeautyfacts.org)
 - [Open Products Facts](https://world.openproductsfacts.org)
 - [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/)
+- [openFDA](https://open.fda.gov)
+- [openFDA terms of service](https://open.fda.gov/terms/)
 - [Label decoder on ihateperfume.com](https://ihateperfume.com/label-decoder/)
 
 ## The app’s license
@@ -61,6 +63,6 @@ We may update these terms. The date at the top shows when they last changed, and
 
 ## Contact
 
-Questions? Reach us through ihateperfume.com.
+Questions? Email admin@ihateperfume.com or use the contact page on ihateperfume.com.
 
-- [ihateperfume.com](https://ihateperfume.com)
+- [Contact ihateperfume.com](https://ihateperfume.com/contact/)

@@ -4,7 +4,7 @@
 
 Last updated: October 3, 2026
 
-I Hate Perfume is a free app from ihateperfume.com. It has no account, no ads, no analytics, and no tracking. This policy explains what the app does with your information.
+I Hate Perfume is a free app from ihateperfume.com. It has no account, no ads, no analytics, and no tracking. This policy explains what the app does with your information. It is also published at https://ihateperfume.com/app-privacy/.
 
 ## The short version
 
@@ -13,7 +13,8 @@ I Hate Perfume is a free app from ihateperfume.com. It has no account, no ads, n
 
 ## What leaves your phone
 
-- Barcode numbers. When you scan or type a barcode, the app sends that number to Open Beauty Facts (world.openbeautyfacts.org) and, if it finds no ingredient list there, to Open Products Facts (world.openproductsfacts.org). The request names the app in the same way for everyone; it carries no account, device ID, or location. Like any website, these services see your IP address and may keep logs. Their privacy policies explain what they keep.
+- Barcode numbers. When you scan or type a barcode, the app sends that number to Open Beauty Facts (world.openbeautyfacts.org); if it finds no ingredient list there, to Open Products Facts (world.openproductsfacts.org); and if it still finds none, to the U.S. Food and Drug Administration’s openFDA service (api.fda.gov), which has the labels of over-the-counter drugs such as sunscreen. Only the barcode number is sent. The request names the app in the same way for everyone; it carries no account, device ID, or location. Like any website, these services see your IP address and may keep logs. Their privacy policies explain what they keep.
+- Maker links. For some brands, the app shows a link to the maker’s own ingredient page. Opening it sends the barcode to that company’s website, and only when you tap the link. The app never contacts the maker on its own.
 - Links. Links to ihateperfume.com, EWG, and official sources open in your browser only when you tap them. From then on, that website’s privacy policy applies.
 - Sharing. If you tap Share on a result, Android’s share sheet opens and you choose where the text goes. Nothing is shared unless you choose it.
 
@@ -21,6 +22,8 @@ Nothing else is sent: not your photos, not the ingredient lists you read or type
 
 - [Open Beauty Facts privacy policy](https://world.openbeautyfacts.org/privacy)
 - [Open Products Facts privacy policy](https://world.openproductsfacts.org/privacy)
+- [openFDA terms of service](https://open.fda.gov/terms/)
+- [FDA website policies, including privacy](https://www.fda.gov/about-fda/about-website/website-policies)
 
 ## Camera and photos
 
@@ -61,7 +64,7 @@ The app isn’t directed at children under 13, and it collects no personal infor
 
 ## Your choices and rights
 
-Because we hold no personal information about you, there’s nothing for us to show you, correct, or delete. What’s on your phone is under your control (see above). For data held by Open Beauty Facts, Open Products Facts, or Google, contact them.
+Because we hold no personal information about you, there’s nothing for us to show you, correct, or delete. What’s on your phone is under your control (see above). For data held by Open Beauty Facts, Open Products Facts, the FDA, or Google, contact them.
 
 ## Changes
 
@@ -69,6 +72,6 @@ If the app changes what it sends or stores (for example, downloading updated ing
 
 ## Contact
 
-Questions? Reach us through ihateperfume.com.
+Questions? Email admin@ihateperfume.com or use the contact page on ihateperfume.com.
 
-- [ihateperfume.com](https://ihateperfume.com)
+- [Contact ihateperfume.com](https://ihateperfume.com/contact/)

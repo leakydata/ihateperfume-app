@@ -1,0 +1,45 @@
+{
+ "meta": {
+  "results": {
+   "skip": 0,
+   "limit": 1,
+   "total": 1
+  }
+ },
+ "results": [
+  {
+   "active_ingredient": [
+    "Active ingredients Purpose Avobenzone 3% Sunscreen Homosalate 10% Sunscreen Octisalate 5% Sunscreen Octocrylene 10% Sunscreen"
+   ],
+   "purpose": [
+    "Active ingredients Purpose Avobenzone 3% Sunscreen Homosalate 10% Sunscreen Octisalate 5% Sunscreen Octocrylene 10% Sunscreen"
+   ],
+   "inactive_ingredient": [
+    "Inactive ingredients Alcohol Denat., Isobutane, Dicaprylyl Carbonate, Polyester-7, Acrylates/Octylacrylamide Copolymer, Neopentyl Glycol Diheptanoate, Fragrance, Tocopheryl Acetate"
+   ],
+   "set_id": "0464448b-342b-4e54-a20e-6ec6bd622889",
+   "effective_time": "20251106",
+   "openfda": {
+    "brand_name": [
+     "Neutrogena Beach Defense Water Plus Sun Protection Sunscreen Broad Spectrum SPF 50"
+    ],
+    "generic_name": [
+     "AVOBENZONE, HOMOSALATE, OCTISALATE, AND OCTOCRYLENE"
+    ],
+    "manufacturer_name": [
+     "Kenvue Brands LLC"
+    ],
+    "product_ndc": [
+     "69968-0600"
+    ],
+    "package_ndc": [
+     "69968-0600-7",
+     "69968-0600-2"
+    ],
+    "upc": [
+     "0086800112549"
+    ]
+   }
+  }
+ ]
+}

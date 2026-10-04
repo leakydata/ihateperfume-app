@@ -60,7 +60,7 @@ const _updated = 'Last updated: October 3, 2026';
 
 const termsDoc = LegalDoc('Terms of use and disclaimer', _updated, [
   P('These terms cover the I Hate Perfume app from ihateperfume.com. By using the app, you agree to them. If you '
-      'don’t agree, please don’t use the app.'),
+      'don’t agree, please don’t use the app. These terms are also published at https://ihateperfume.com/app-terms/.'),
 ], [
   LegalSection('Information, not medical advice', [
     P('The app shows information about ingredients. It is not medical advice and not a diagnosis, and it doesn’t '
@@ -75,7 +75,8 @@ const termsDoc = LegalDoc('Terms of use and disclaimer', _updated, [
     Li('Ingredient flags come from the sources named next to each flag. Those lists may be incomplete. An '
         'ingredient that isn’t on any list hasn’t been shown to be safe; it may never have been assessed.'),
     Li('Labels and formulas change, sometimes without a new barcode. Product data from Open Beauty Facts and Open '
-        'Products Facts is added by volunteers and may be wrong, incomplete, or out of date.'),
+        'Products Facts is added by volunteers and may be wrong, incomplete, or out of date. FDA drug labels come '
+        'from the makers and may not match the package you have.'),
     Li('Text recognition can misread a label, and a typed list can have typos. Check what the app read against '
         'the package.'),
     P('Always read the actual package before you buy or use a product.'),
@@ -107,13 +108,17 @@ const termsDoc = LegalDoc('Terms of use and disclaimer', _updated, [
   ]),
   LegalSection('Data and links', [
     P('Product names and ingredient lists come from Open Beauty Facts and Open Products Facts, under the Open '
-        'Database License (ODbL). Ingredient flags come from the ihateperfume.com label decoder, which names the '
-        'official source of each flag.'),
-    P('Links to other websites, such as ihateperfume.com, EWG, and official sources, open in your browser only '
-        'when you tap them. Those sites have their own terms and privacy policies.'),
+        'Database License (ODbL), and for over-the-counter drugs such as sunscreen and antiperspirant, from FDA drug '
+        'labels through the U.S. Food and Drug Administration’s openFDA service, which are in the public domain. '
+        'Ingredient flags come from the ihateperfume.com label decoder, which names the official source of each '
+        'flag.'),
+    P('Links to other websites, such as ihateperfume.com, EWG, official sources, and a maker’s ingredient page, '
+        'open in your browser only when you tap them. Those sites have their own terms and privacy policies.'),
     L('Open Beauty Facts', 'https://world.openbeautyfacts.org'),
     L('Open Products Facts', 'https://world.openproductsfacts.org'),
     L('Open Database License (ODbL)', 'https://opendatacommons.org/licenses/odbl/1-0/'),
+    L('openFDA', 'https://open.fda.gov'),
+    L('openFDA terms of service', 'https://open.fda.gov/terms/'),
     L('Label decoder on ihateperfume.com', 'https://ihateperfume.com/label-decoder/'),
   ]),
   LegalSection('The app’s license', [
@@ -126,14 +131,15 @@ const termsDoc = LegalDoc('Terms of use and disclaimer', _updated, [
         'always in the app. If you keep using the app after a change, the new terms apply.'),
   ]),
   LegalSection('Contact', [
-    P('Questions? Reach us through ihateperfume.com.'),
-    L('ihateperfume.com', 'https://ihateperfume.com'),
+    P('Questions? Email admin@ihateperfume.com or use the contact page on ihateperfume.com.'),
+    L('Contact ihateperfume.com', 'https://ihateperfume.com/contact/'),
   ]),
 ]);
 
 const privacyDoc = LegalDoc('Privacy policy', _updated, [
   P('I Hate Perfume is a free app from ihateperfume.com. It has no account, no ads, no analytics, and no '
-      'tracking. This policy explains what the app does with your information.'),
+      'tracking. This policy explains what the app does with your information. It is also published at '
+      'https://ihateperfume.com/app-privacy/.'),
 ], [
   LegalSection('The short version', [
     Li('We don’t collect any personal information. We have no server that receives data from the app.'),
@@ -141,10 +147,15 @@ const privacyDoc = LegalDoc('Privacy policy', _updated, [
   ]),
   LegalSection('What leaves your phone', [
     Li('Barcode numbers. When you scan or type a barcode, the app sends that number to Open Beauty Facts '
-        '(world.openbeautyfacts.org) and, if it finds no ingredient list there, to Open Products Facts '
-        '(world.openproductsfacts.org). The request names the app in the same way for everyone; it carries no '
-        'account, device ID, or location. Like any website, these services see your IP address and may keep logs. '
-        'Their privacy policies explain what they keep.'),
+        '(world.openbeautyfacts.org); if it finds no ingredient list there, to Open Products Facts '
+        '(world.openproductsfacts.org); and if it still finds none, to the U.S. Food and Drug Administration’s '
+        'openFDA service (api.fda.gov), which has the labels of over-the-counter drugs such as sunscreen. Only the '
+        'barcode number is sent. The request names the app in the same way for everyone; it carries no account, '
+        'device ID, or location. Like any website, these services see your IP address and may keep logs. Their '
+        'privacy policies explain what they keep.'),
+    Li('Maker links. For some brands, the app shows a link to the maker’s own ingredient page. Opening it sends '
+        'the barcode to that company’s website, and only when you tap the link. The app never contacts the maker '
+        'on its own.'),
     Li('Links. Links to ihateperfume.com, EWG, and official sources open in your browser only when you tap them. '
         'From then on, that website’s privacy policy applies.'),
     Li('Sharing. If you tap Share on a result, Android’s share sheet opens and you choose where the text goes. '
@@ -153,6 +164,8 @@ const privacyDoc = LegalDoc('Privacy policy', _updated, [
         'scans.'),
     L('Open Beauty Facts privacy policy', 'https://world.openbeautyfacts.org/privacy'),
     L('Open Products Facts privacy policy', 'https://world.openproductsfacts.org/privacy'),
+    L('openFDA terms of service', 'https://open.fda.gov/terms/'),
+    L('FDA website policies, including privacy', 'https://www.fda.gov/about-fda/about-website/website-policies'),
   ]),
   LegalSection('Camera and photos', [
     P('The app asks for one permission: the camera, to read barcodes and ingredient lists. You can turn it off in '
@@ -193,7 +206,7 @@ const privacyDoc = LegalDoc('Privacy policy', _updated, [
   LegalSection('Your choices and rights', [
     P('Because we hold no personal information about you, there’s nothing for us to show you, correct, or '
         'delete. What’s on your phone is under your control (see above). For data held by Open Beauty Facts, Open '
-        'Products Facts, or Google, contact them.'),
+        'Products Facts, the FDA, or Google, contact them.'),
   ]),
   LegalSection('Changes', [
     P('If the app changes what it sends or stores (for example, downloading updated ingredient data from '
@@ -201,8 +214,8 @@ const privacyDoc = LegalDoc('Privacy policy', _updated, [
         'the top shows when it last changed.'),
   ]),
   LegalSection('Contact', [
-    P('Questions? Reach us through ihateperfume.com.'),
-    L('ihateperfume.com', 'https://ihateperfume.com'),
+    P('Questions? Email admin@ihateperfume.com or use the contact page on ihateperfume.com.'),
+    L('Contact ihateperfume.com', 'https://ihateperfume.com/contact/'),
   ]),
 ]);
 
