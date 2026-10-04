@@ -14,6 +14,19 @@ ingredient data and reviews submitted products.
 - Every flag names its source. The app never says a product is "safe".
 - Never state or imply that fragrance causes autism.
 
+## What it does (first version)
+- **Scan a barcode** (ML Kit, on the phone): the number is looked up in Open Beauty Facts, then Open Products
+  Facts. If there's no ingredient list, it goes straight to photographing one.
+- **Photograph the ingredients** (ML Kit text recognition, on the phone), or type/paste them. The text it read is
+  shown for checking: it lists only the items it didn't recognize, with a suggested fix for misreads ("SODUM
+  HYDROKDE" → Sodium Hydroxide), Edit for the rest, and Remove for label text such as addresses.
+- **Results**: scent ingredients, fragrance allergens, and other flags, each with its source; links to the
+  ingredient's page on ihateperfume.com; what the check can't see.
+- **My list**: ingredients, groups, or words the user is allergic to, irritated by, or wants to know about,
+  flagged first on every result (including "could be inside Fragrance").
+- **Search** any ingredient name; **recent scans** on the phone only; **Learn** with the promises, data sources,
+  terms, and privacy policy (drafts, `TERMS.md` and `PRIVACY.md`).
+
 ## Design
 `design/mockups.png` (source `design/mockups.html`) is the design guide: the website's palette
 (ink #111111, signal #C4361B, label #F3F1EC, paper #FFFFFF), Archivo condensed caps for headlines,

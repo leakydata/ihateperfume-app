@@ -33,7 +33,24 @@ autism/ADHD app uses it). Tagline "Scan it. Unmask it." The owner also wants a s
 - Barcodes: Open Beauty Facts / Open Products Facts (US coverage is thin: ~2.3k cosmetics and ~230 household
   products with ingredient lists), then photograph the list, then our moderated submissions.
 
+## App layout
+- `lib/engine/decoder.dart` (website port, see above), `lib/engine/ocr_fix.dart` (spelling suggestions and
+  label-text detection for the review screen; never changes the decoder's matching), `lib/report.dart` (decoder
+  result → per-ingredient rows with sources), `lib/my_list.dart` (the user's list and its matching),
+  `lib/services.dart` (data loading, recent scans, barcode lookup, `cleanOcr`), `lib/theme.dart`, `lib/screens/`.
+- Legal text lives in `lib/screens/legal.dart`; `TERMS.md` and `PRIVACY.md` are generated from it:
+  `UPDATE_LEGAL=1 flutter test test/legal_test.dart` (the test fails if they drift). They're drafts; the owner
+  will get a lawyer review before the public store launch.
+- Real phone scans are test fixtures in `test/fixtures/`; add new failing scans there.
+- Privacy is enforced in the manifest: camera is the only permission (no mic/storage), backup and device
+  transfer are off, and ML Kit's usage-reporting backend (datatransport) is removed. Recheck the merged manifest
+  (`aapt2 dump permissions`) after adding any plugin.
+
 ## Tooling
 - Flutter: ~/development/flutter/bin/flutter (not on PATH). JDK 21 configured (system Java 25 is too new).
-- Android SDK ~/Android/Sdk. The owner's Pixel 10 Pro XL is on adb (USB debugging): install test builds there.
+- Android SDK ~/Android/Sdk. The owner's Pixel 10 Pro XL is on adb (USB debugging): install test builds there
+  (`flutter build apk --release --split-per-abi --target-platform android-arm64`, then `adb install -r` the
+  arm64 APK). It's the owner's personal phone: before installing or driving it, check the foreground app
+  (`dumpsys activity activities | grep topResumedActivity`) and don't interrupt them; when driving the UI, check
+  before every tap that our app is in front, and blank the status bar in screenshots before committing them.
 - Google Play account: the owner creates it ($25); 12 testers x 14 days closed test (Discord). Apple later.
