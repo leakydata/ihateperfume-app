@@ -8,17 +8,20 @@ I Hate Perfume is a free app from ihateperfume.com. It has no account, no ads, n
 
 ## The short version
 
-- We don’t collect any personal information. We have no server that receives data from the app.
-- Your scans stay on this phone. Only a barcode number is sent, to look the product up.
+- We don’t collect any personal information. There is no account, and nothing about you is sent.
+- Your scans stay on this phone. Only a barcode number is sent to look the product up, unless you choose to send us a product.
 
 ## What leaves your phone
 
-- Barcode numbers. When you scan or type a barcode, the app sends that number to Open Beauty Facts (world.openbeautyfacts.org); if it finds no ingredient list there, to Open Products Facts (world.openproductsfacts.org); and if it still finds none, to the U.S. Food and Drug Administration’s openFDA service (api.fda.gov), which has the labels of over-the-counter drugs such as sunscreen. Only the barcode number is sent. Every copy of the app identifies itself the same way, and the request carries no account, device ID, or location. Like any website, these services see your IP address and may keep logs. Their privacy policies explain what they keep.
+- Barcode numbers. When you scan or type a barcode, the app sends that number to Open Beauty Facts (world.openbeautyfacts.org); if it finds no ingredient list there, to Open Products Facts (world.openproductsfacts.org); and if it still finds none, to the U.S. Food and Drug Administration’s openFDA service (api.fda.gov), which has the labels of over-the-counter drugs such as sunscreen; and if it still finds none, to ihateperfume.com, which has products we’ve checked ourselves. Only the barcode number is sent. Every copy of the app identifies itself the same way, and the request carries no account, device ID, or location. Like any website, these services see your IP address and may keep logs. Their privacy policies explain what they keep.
+- Ingredient data updates. About once a day, the app asks ihateperfume.com whether there is newer ingredient data, and downloads it if there is. The request carries nothing about you: no account, device ID, or location.
+- Fragrance-free finds. When you open the Finds tab, or pull to refresh it, the app downloads the list from ihateperfume.com. Nothing about you is sent.
+- Products you send us. Only if you choose to send us a product. You see exactly what will be sent before you tap Send: your photos of the package and the ingredient list, the barcode, and anything you typed or ticked. Location and all other photo details are removed on your phone before anything is sent, and your original photos aren’t changed. We keep the photos privately, never publish them, and delete them once we’ve reviewed them. If we approve the product, its name, ingredient list, and what the package says are published in the app and on ihateperfume.com. To stop abuse, our server limits how many products can be sent each day. It does this with a scrambled code made from your IP address that changes every day and is deleted after 48 hours. We never store your IP address.
 - Maker links. After a barcode scan, the app shows a link to the maker’s own ingredient page (for P&G products) or to SmartLabel’s product search (smartlabel.org, run by the Consumer Brands Association). Opening it sends the barcode to that website, and only when you tap the link. The app never contacts them on its own.
 - Links. Links to ihateperfume.com, EWG, and official sources open in your browser only when you tap them. From then on, that website’s privacy policy applies.
 - Sharing. If you tap Share on a result, Android’s share sheet opens and you choose where the text goes. Nothing is shared unless you choose it.
 
-Nothing else is sent: not your photos, not the ingredient lists you read or type, and not your recent scans.
+Nothing else is sent: not the ingredient lists you read or type, not your recent scans, not your list, and no photos unless you choose to send us a product.
 
 - [Open Beauty Facts privacy policy](https://world.openbeautyfacts.org/privacy)
 - [Open Products Facts privacy policy](https://world.openproductsfacts.org/privacy)

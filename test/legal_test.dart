@@ -47,7 +47,9 @@ void main() {
     for (final s in [
       'not yet reviewed by a lawyer',
       'We don’t collect any personal information.',
-      'Only a barcode number is sent, to look the product up.',
+      'Only a barcode number is sent to look the product up, unless you choose to send us a product.',
+      'We never store your IP address.',
+      'Location and all other photo details are removed on your phone before anything is sent',
       'https://world.openbeautyfacts.org/privacy',
       'left out of Android backups and device-to-device transfers',
       'No analytics, no ads, no crash reporting, no accounts, and no tracking.',

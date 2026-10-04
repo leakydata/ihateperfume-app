@@ -120,7 +120,8 @@ class FirstRunNotice extends StatelessWidget {
   static const points = [
     'Information, not medical advice.',
     'Never a guarantee: always read the package. Labels and formulas change, and text recognition can misread.',
-    'Your scans stay on this phone. Only a barcode number is sent, to look the product up.',
+    'Your scans stay on this phone. Only a barcode number is sent to look the product up, unless you choose to send '
+        'us a product.',
   ];
 
   @override
