@@ -165,8 +165,29 @@ Future<Product?> lookUp(String barcode, {http.Client? client}) async {
 /// Tidy text read from a photo of a label: start at "Ingredients:", and join lines broken mid-ingredient.
 String cleanOcr(String raw) {
   var t = raw.replaceAll('\r', '');
-  final m = RegExp(r'\b(ingredients?|inci)\s*[:;.]', caseSensitive: false).firstMatch(t);
-  if (m != null) t = t.substring(m.end);
+  // The heading, even misread: "IMGREDIENTS:", "lNGREDIENTS;", "1NGREDIENTS.", "Ingrédients:", "INCI:".
+  int dist(String a, String b) {
+    var prev = List<int>.generate(b.length + 1, (j) => j);
+    for (var i = 1; i <= a.length; i++) {
+      final cur = [i, ...List<int>.filled(b.length, 0)];
+      for (var j = 1; j <= b.length; j++) {
+        final sub = prev[j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1);
+        final del = prev[j] + 1, ins = cur[j - 1] + 1;
+        cur[j] = sub < del ? (sub < ins ? sub : ins) : (del < ins ? del : ins);
+      }
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+
+  for (final m in RegExp(r'([^\s:;.,]{4,13})\s*[:;.]').allMatches(t)) {
+    final w = Decoder.norm(m[1]!.replaceAll(RegExp('[1|!]'), 'i').replaceAll('0', 'o')).replaceAll('l', 'i');
+    if (w == 'inci' ||
+        (w.length >= 8 && (dist(w, 'ingredients') <= 2 || dist(w, 'ingredient') <= 2 || dist(w, 'ingredientes') <= 2))) {
+      t = t.substring(m.end);
+      break;
+    }
+  }
   final lines = t.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
   // Labels are comma separated; if there are commas, a new line is just the label wrapping.
   if (t.contains(',') && lines.length > 1) {
@@ -201,6 +222,33 @@ String cleanOcr(String raw) {
         break;
       }
     }
+  }
+  // Label text glued on with no period: "Sodium Hydroxide 0299393816 Galderma Distributed by: ... TX 75201".
+  // Never inside the first item.
+  final firstSep = t.indexOf(RegExp(r'[,;\n]'));
+  if (firstSep > 0) {
+    const states = 'AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|'
+        'NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY';
+    final footers = [
+      RegExp(
+          r'\b(distributed|dist\.?\s*by|manufactured\s+(for|by)|mfd|made\s+in|product\s+of|warnings?|caution|'
+          r'directions|keep\s+out\s+of|for\s+external\s+use|questions|net\s+wt)\b',
+          caseSensitive: false),
+      RegExp(r'www\.|https?://|\b[a-z0-9-]+\.(com|net|org)\b', caseSensitive: false),
+      RegExp(r'\b(' + states + r'),?\s+[0-9]{5}(-[0-9]{4})?\b'), // state and zip
+      RegExp(r'\(?\b[0-9]{3}\)?[\s.-][0-9]{3}[\s.-][0-9]{4}\b'), // phone
+      RegExp(r'[0-9]{8,}'), // lot number or barcode
+    ];
+    var cut = t.length;
+    for (final r in footers) {
+      for (final m in r.allMatches(t)) {
+        if (m.start > firstSep) {
+          if (m.start < cut) cut = m.start;
+          break;
+        }
+      }
+    }
+    if (cut < t.length) t = t.substring(0, cut).replaceFirst(RegExp(r'[\s,;:]+$'), '');
   }
   return t.replaceAll(RegExp(r'[ \t]+'), ' ').replaceAll(RegExp(r'\s+,'), ',').trim();
 }

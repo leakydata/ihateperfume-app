@@ -93,6 +93,98 @@ void main() {
     expect(OcrFix.wdist('peg 45', 'peg 40'), greaterThan(2));
   });
 
+  /// "kind: from -> to" for every issue in [text].
+  List<String> issues(String text) => [for (final i in fix.check(text)) '$i'];
+
+  test('a real phone scan (Cetaphil body wash): every misread item gets the right fix', () {
+    final text = cleanOcr(File('test/fixtures/ocr-cetaphil-body-wash.txt').readAsStringSync());
+    expect(issues(text), [
+      'suggestion: DIG0DIM m AURETH SULFOSUCCINATE -> DISODIUM LAURETH SULFOSUCCINATE',
+      'suggestion: PANTHENOL [VITANMIN 85] GLYCOL DISTEARATE -> PANTHENOL [VITANMIN 85], GLYCOL DISTEARATE',
+      'suggestion: ACRYLATES/CI0-30 ALKYL ACRYLATE CROSSPOLYMER -> ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER',
+      'suggestion: SODUM HYDROKDE -> SODIUM HYDROXIDE',
+    ]);
+    // After the fixes, the misread common name in brackets is left for the user ("Vitamin B5" isn't a known name).
+    final fixed = OcrFix.applyAll(text, fix.suggest(text));
+    expect(issues(fixed), ['unknown: VITANMIN 85']);
+    final clean = OcrFix.removeAll(fixed, fix.check(fixed));
+    expect(clean, contains('ALOE BARBADENSIS LEAF JUICE POWDER, PANTHENOL, GLYCOL DISTEARATE, LAURYL LACTATE'));
+    expect(fix.check(clean), isEmpty);
+    expect(decoder.decode(clean).items.last, 'SODIUM HYDROXIDE');
+  });
+
+  test('the same scan without cleanup: directions and the footer are label text', () {
+    final raw = File('test/fixtures/ocr-cetaphil-body-wash.txt').readAsStringSync();
+    final all = fix.check(raw);
+    final label = [for (final i in all) if (i.kind == IssueKind.labelText) i.from];
+    expect(label, [
+      'ECTIONS: Apply a liberal to moistened hands',
+      'pouf or oth. Massage gently ito a Rinse and pat dry. For ideal re',
+      '0299393816 GALDERMA Distributed by: Galderna laborsturies',
+      'TX 75201 USA All trademarks are the praperty of their respective owners Made in Germany Cetaphil.com P202418-0',
+    ]);
+    // A footer glued to a misread name: the name gets its fix, the rest is label text.
+    expect(issues('Water, SODUM HYDROKDE 0299393816 GALDERMA Distributed by: Galderna'), [
+      'suggestion: SODUM HYDROKDE -> SODIUM HYDROXIDE',
+      'labelText: 0299393816 GALDERMA Distributed by: Galderna',
+    ]);
+  });
+
+  test('label text: addresses, numbers, codes, web addresses, companies, directions', () {
+    expect(
+        issues('Water, P500, 0299393816, Distributed by Example Co., Dallas, TX 75201, www.example.com, '
+            'help@example.com, 1-800-555-1234, Example Laboratories, Apply to wet skin and rinse well, '
+            'All trademarks are the property of their respective owners'),
+        [
+          'labelText: P500',
+          'labelText: 0299393816',
+          'labelText: Distributed by Example Co',
+          'unknown: Dallas',
+          'labelText: TX 75201',
+          'labelText: www.example.com',
+          'labelText: help@example.com',
+          'labelText: 1-800-555-1234',
+          'labelText: Example Laboratories',
+          'labelText: Apply to wet skin and rinse well',
+          'labelText: All trademarks are the property of their respective owners',
+        ]);
+    // An item with a known ingredient name in it is never label text.
+    expect(issues('Rinse with Water, Sodium Hydroxide 0299393816'), [
+      'unknown: Rinse with Water',
+      'labelText: 0299393816',
+    ]);
+  });
+
+  test('unknown: not a known name and no confident fix', () {
+    expect(issues('Water, Optical Brightener, Zq, E330, Vitamin E, CI 77891, Glycerin 2%, Masking Fragrance'), [
+      'unknown: Optical Brightener',
+      'unknown: Zq',
+      'unknown: E330',
+      'unknown: Vitamin E',
+    ]);
+    // Common names in brackets after a known name are fine; parts of a known name are fine.
+    expect(issues('Panthenol (Vitamin B5), Rosa Damascena (Rose) Flower Oil, Butyrospermum Parkii (Shea) Butter'),
+        isEmpty);
+    expect(issues('Tocopherol (Vitamin E) Glycerin'),
+        ['suggestion: Tocopherol (Vitamin E) Glycerin -> Tocopherol (Vitamin E), Glycerin']);
+  });
+
+  test('removeAll takes the item and one separator, and skips text that changed', () {
+    const t = 'Water, P500, Glycerin, Zq.';
+    final all = fix.check(t);
+    expect(all.map((i) => i.from), ['P500', 'Zq']);
+    expect(OcrFix.removeAll(t, all), 'Water, Glycerin.');
+    expect(OcrFix.removeAll(t, [all.first]), 'Water, Glycerin, Zq.');
+    expect(OcrFix.removeAll('P500, Water', fix.check('P500, Water')), 'Water');
+    expect(OcrFix.removeAll('Water, P501, Glycerin', all), 'Water, P501, Glycerin');
+    const glued = 'Water, Sodium Hydroxide 0299393816 Galderma Distributed by: X';
+    expect(OcrFix.removeAll(glued, fix.check(glued)), 'Water, Sodium Hydroxide');
+    const bracket = 'Panthenol [Vitanmin 85], Glycerin';
+    expect(OcrFix.removeAll(bracket, fix.check(bracket)), 'Panthenol, Glycerin');
+    const lines = 'Water\nP500\nGlycerin';
+    expect(OcrFix.removeAll(lines, fix.check(lines)), 'Water\nGlycerin');
+  });
+
   test('a 30-item list takes well under 200 ms', () {
     const items = [
       'Aqua', 'Sodium Laureth Sulfale', 'Cocamidopropyl Betain', 'Glycerin', 'Parfurn', 'Lim0nene', 'Linal00l',
