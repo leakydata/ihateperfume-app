@@ -3,9 +3,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'screens/about.dart';
 import 'screens/home.dart';
+import 'screens/legal.dart';
 import 'screens/search.dart';
 import 'services.dart';
 import 'theme.dart';
@@ -28,10 +30,11 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  late final Future<void> _ready = Future.wait([
+  late final Future<bool> _ready = Future.wait([
     loadDecoder(),
     Future.delayed(const Duration(milliseconds: 600)), // let the splash be read, not flash
-  ]);
+    FirstRunNotice.seen(),
+  ]).then((r) => r[2] as bool);
 
   @override
   Widget build(BuildContext context) => MaterialApp(
@@ -44,7 +47,7 @@ class _AppState extends State<App> {
           builder: (context, snap) {
             if (snap.hasError) return Splash(error: '${snap.error}');
             if (snap.connectionState != ConnectionState.done) return const Splash();
-            return const Shell();
+            return NoticeGate(seen: snap.data!, child: const Shell());
           },
         ),
       );
@@ -79,6 +82,85 @@ class Splash extends StatelessWidget {
           ),
         ),
       );
+}
+
+/// Shows [FirstRunNotice] until it's dismissed once, then [child].
+class NoticeGate extends StatefulWidget {
+  final bool seen;
+  final Widget child;
+  const NoticeGate({super.key, required this.seen, required this.child});
+  @override
+  State<NoticeGate> createState() => _NoticeGateState();
+}
+
+class _NoticeGateState extends State<NoticeGate> {
+  late bool _seen = widget.seen;
+  @override
+  Widget build(BuildContext context) => _seen
+      ? widget.child
+      : FirstRunNotice(onDone: () {
+          setState(() => _seen = true);
+          FirstRunNotice.markSeen();
+        });
+}
+
+/// Shown once, after the splash on first launch: what the app is and isn't, and what leaves the phone.
+class FirstRunNotice extends StatelessWidget {
+  static const prefsKey = 'notice-v1';
+  final VoidCallback onDone;
+  const FirstRunNotice({super.key, required this.onDone});
+
+  static Future<bool> seen() async => (await SharedPreferences.getInstance()).getBool(prefsKey) ?? false;
+  static Future<void> markSeen() async => (await SharedPreferences.getInstance()).setBool(prefsKey, true);
+
+  static const points = [
+    'Information, not medical advice.',
+    'Never a guarantee: always read the package. Labels and formulas change, and text recognition can misread.',
+    'Your scans stay on this phone. Only a barcode number is sent, to look the product up.',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    Widget link(String t, LegalDoc doc) => InkWell(
+          onTap: () => Navigator.of(context).push(LegalScreen.route(doc, back: 'Back')),
+          child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: MonoLink(t, icon: Icons.arrow_forward, color: C.signalLight)),
+        );
+    return AnnotatedRegion(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: C.ink,
+        body: SafeArea(
+          child: Column(children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 40, 24, 16),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Big('Before you start', size: 56, color: C.paper),
+                  const SizedBox(height: 28),
+                  for (final t in points)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 18),
+                      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        const Padding(
+                            padding: EdgeInsets.only(top: 8, right: 12),
+                            child: SizedBox(width: 10, height: 10, child: ColoredBox(color: C.signal))),
+                        Expanded(child: Text(t, style: T.lede.copyWith(color: C.paper, fontSize: 18))),
+                      ]),
+                    ),
+                  const SizedBox(height: 8),
+                  link('Terms and disclaimer', termsDoc),
+                  link('Privacy policy', privacyDoc),
+                ]),
+              ),
+            ),
+            Padding(padding: const EdgeInsets.fromLTRB(24, 8, 24, 24), child: Btn('Got it', onTap: onDone)),
+          ]),
+        ),
+      ),
+    );
+  }
 }
 
 /// Bottom tabs: Scan, Search, Learn.

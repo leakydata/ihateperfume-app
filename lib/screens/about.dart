@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services.dart';
 import '../theme.dart';
 import 'ingredient.dart';
+import 'legal.dart';
 
 /// "Learn": what the app promises, where the data comes from, and the required attribution.
 class AboutScreen extends StatelessWidget {
@@ -19,6 +20,13 @@ class AboutScreen extends StatelessWidget {
             const Icon(Icons.north_east, size: 18, color: C.signal),
           ]),
         );
+    Widget page(String t, LegalDoc doc) => Rule(
+          onTap: () => Navigator.of(context).push(LegalScreen.route(doc)),
+          child: Row(children: [
+            Expanded(child: Text(t, style: T.lede.copyWith(fontWeight: FontWeight.w600))),
+            const Icon(Icons.arrow_forward, size: 18, color: C.signal),
+          ]),
+        );
     return Column(children: [
       TopBar(left: Text('LEARN', style: T.big(30).copyWith(height: 1))),
       Expanded(
@@ -32,7 +40,7 @@ class AboutScreen extends StatelessWidget {
           for (final t in const [
             'No account, no ads, no tracking. Free.',
             'Barcode reading, text recognition, and ingredient matching run on this phone.',
-            'Your photos never leave the phone. They’re deleted as soon as the text is read.',
+            'Your photos never leave the phone. Photos the app takes are deleted as soon as the text is read.',
             'Only a scanned barcode number is sent, to Open Beauty Facts and then Open Products Facts, to find the '
                 'product. Nothing else goes anywhere.',
             'Recent scans are stored only on this phone and left out of phone backups.',
@@ -58,6 +66,10 @@ class AboutScreen extends StatelessWidget {
           link('Open Beauty Facts', 'https://world.openbeautyfacts.org'),
           link('Open Products Facts', 'https://world.openproductsfacts.org'),
           link('Open Database License (ODbL)', 'https://opendatacommons.org/licenses/odbl/1-0/'),
+          h('Terms and privacy'),
+          p('Information, not medical advice. Never a guarantee: always read the package.'),
+          page('Terms and disclaimer', termsDoc),
+          page('Privacy policy', privacyDoc),
           h('License'),
           p('Based on the I Hate Perfume app by ihateperfume.com (https://ihateperfume.com).'),
           Text(
@@ -66,6 +78,8 @@ class AboutScreen extends StatelessWidget {
             'Fonts: Archivo and IBM Plex Mono, SIL Open Font License.',
             style: T.src(),
           ),
+          const SizedBox(height: 8),
+          Text(noWarranty, style: T.src()),
           const SizedBox(height: 12),
           InkWell(
             onTap: () => showLicensePage(
