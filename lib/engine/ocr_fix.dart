@@ -155,8 +155,20 @@ class OcrFix {
   /// that isn't an ingredient, or unknown.
   List<Issue> check(String text) {
     final out = <Issue>[];
+    var lastKnownEnd = -1; // end of the last item that matched a known name
     for (final (s, e) in spans(text)) {
+      final before = out.length;
       _item(text, s, e, out);
+      if (out.length == before) lastKnownEnd = e;
+    }
+    // A footer runs to the end of the text: once label text starts after the last known ingredient, the
+    // unrecognized pieces that follow ("Dallas" between "Distributed by…" and "TX 75201") are label text too.
+    final first = out.indexWhere((i) => i.kind == IssueKind.labelText && i.start > lastKnownEnd);
+    if (first >= 0) {
+      for (var j = first + 1; j < out.length; j++) {
+        final i = out[j];
+        if (i.kind == IssueKind.unknown) out[j] = Issue(i.start, i.end, i.from, null, IssueKind.labelText);
+      }
     }
     return out;
   }

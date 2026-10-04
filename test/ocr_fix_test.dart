@@ -121,6 +121,7 @@ void main() {
       'ECTIONS: Apply a liberal to moistened hands',
       'pouf or oth. Massage gently ito a Rinse and pat dry. For ideal re',
       '0299393816 GALDERMA Distributed by: Galderna laborsturies',
+      'L2. Dallas',
       'TX 75201 USA All trademarks are the praperty of their respective owners Made in Germany Cetaphil.com P202418-0',
     ]);
     // A footer glued to a misread name: the name gets its fix, the rest is label text.
@@ -139,7 +140,7 @@ void main() {
           'labelText: P500',
           'labelText: 0299393816',
           'labelText: Distributed by Example Co',
-          'unknown: Dallas',
+          'labelText: Dallas',
           'labelText: TX 75201',
           'labelText: www.example.com',
           'labelText: help@example.com',
@@ -214,7 +215,8 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(const MaterialApp(home: ReviewScreen(text: 'Water, Lim0nene, Parfurn', kind: ReviewKind.photo)));
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('CHECK THESE SPELLINGS'), findsOneWidget);
+    expect(find.text('2 ITEMS TO CHECK'), findsOneWidget);
+    expect(find.text('PROBABLY MISREAD'), findsOneWidget);
     expect(find.text('Limonene'), findsOneWidget);
     await tester.tap(find.byKey(const Key('use-7')));
     await tester.pump(const Duration(milliseconds: 400));
@@ -224,6 +226,31 @@ void main() {
     await tester.tap(find.text('USE IT'));
     await tester.pump(const Duration(milliseconds: 400));
     expect(field.controller!.text, 'Water, Limonene, Parfum');
-    expect(find.text('CHECK THESE SPELLINGS'), findsNothing);
+    expect(find.textContaining('TO CHECK'), findsNothing);
+  });
+
+  testWidgets('unrecognized items can be edited; label text can be removed', (tester) async {
+    spelling = Future.value(fix);
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.6;
+    addTearDown(tester.view.reset);
+    const text = 'Water, Qwzxv Blorp, Glycerin, Distributed by: Example Labs, Dallas, TX 75201';
+    await tester.pumpWidget(const MaterialApp(home: ReviewScreen(text: text, kind: ReviewKind.photo)));
+    await tester.pump(const Duration(milliseconds: 400));
+    final field = tester.widget<TextField>(find.byKey(const Key('ingredients')));
+    // Not recognized: Edit selects it in the box and changes nothing.
+    expect(find.text('Qwzxv Blorp'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('edit-7')));
+    await tester.tap(find.byKey(const Key('edit-7')));
+    await tester.pump();
+    expect(field.controller!.text, text);
+    expect(field.controller!.selection.textInside(text), 'Qwzxv Blorp');
+    // Label text: Remove all takes out the footer and leaves the ingredients.
+    expect(find.byKey(const Key('remove-all')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('remove-all')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('remove-all')));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(field.controller!.text, 'Water, Qwzxv Blorp, Glycerin');
   });
 }
