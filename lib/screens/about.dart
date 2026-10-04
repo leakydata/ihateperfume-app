@@ -40,7 +40,7 @@ class AboutScreen extends StatelessWidget {
           for (final t in const [
             'No account, no ads, no tracking. Free.',
             'Barcode reading, text recognition, and ingredient matching run on this phone.',
-            'Your photos never leave the phone. Photos the app takes are deleted as soon as the text is read.',
+            'Your photos never leave the phone. They’re deleted as soon as the text is read.',
             'Only a scanned barcode number is sent, to Open Beauty Facts and then Open Products Facts, to find the '
                 'product. Nothing else goes anywhere.',
             'Recent scans are stored only on this phone and left out of phone backups.',

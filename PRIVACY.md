@@ -28,7 +28,7 @@ The app asks for one permission: the camera, to read barcodes and ingredient lis
 
 Barcodes and text are read on the phone by Google ML Kit, using models built into the app. We removed the part of ML Kit that would send usage statistics to Google, so those reports are dropped on the phone.
 
-Photos the app takes are deleted as soon as the text is read. If you pick a photo from your gallery instead, the original isn’t changed or uploaded; Android gives the app a temporary copy, which stays in the app’s cache on this phone until the cache is cleared.
+Photos the app takes are deleted as soon as the text is read. If you pick a photo from your gallery instead, the original isn’t changed or uploaded; Android gives the app a temporary copy, which is also deleted as soon as the text is read.
 
 - [Google ML Kit terms](https://developers.google.com/ml-kit/terms)
 

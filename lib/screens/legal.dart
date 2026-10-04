@@ -160,8 +160,8 @@ const privacyDoc = LegalDoc('Privacy policy', _updated, [
     P('Barcodes and text are read on the phone by Google ML Kit, using models built into the app. We removed the '
         'part of ML Kit that would send usage statistics to Google, so those reports are dropped on the phone.'),
     P('Photos the app takes are deleted as soon as the text is read. If you pick a photo from your gallery '
-        'instead, the original isn’t changed or uploaded; Android gives the app a temporary copy, which stays in '
-        'the app’s cache on this phone until the cache is cleared.'),
+        'instead, the original isn’t changed or uploaded; Android gives the app a temporary copy, which is also '
+        'deleted as soon as the text is read.'),
     L('Google ML Kit terms', 'https://developers.google.com/ml-kit/terms'),
   ]),
   LegalSection('What’s stored on your phone', [
