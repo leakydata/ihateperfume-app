@@ -49,6 +49,14 @@ autism/ADHD app uses it). Tagline "Scan it. Unmask it." The owner also wants a s
   transfer are off, and ML Kit's usage-reporting backend (datatransport) is removed. Recheck the merged manifest
   (`aapt2 dump permissions`) after adding any plugin.
 
+## Server (ihateperfume.com)
+- The app's API is the `ihp-app` WordPress plugin in the website repo (`site/wp-content/plugins/ihp-app/`), contract in
+  `docs/app-api.md` (change the contract first). Endpoints: `/data` + `/decoder.json` (daily data updates),
+  `/products/{barcode}` (our reviewed products, 4th lookup), `/finds`, `POST /submissions`. Submissions are reviewed in
+  wp-admin > App submissions; photos are private (403 from the web), metadata stripped on the phone and again on the
+  server, deleted on approve or reject. After a deploy run `python3 tools/check_app_api.py` in the website repo.
+- The website session deploys the same plugins with `deploy-theme.sh`: message it before deploying.
+
 ## Tooling
 - Flutter: ~/development/flutter/bin/flutter (not on PATH). JDK 21 configured (system Java 25 is too new).
 - Android SDK ~/Android/Sdk. The owner's Pixel 10 Pro XL is on adb (USB debugging): install test builds there
