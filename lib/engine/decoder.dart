@@ -79,9 +79,10 @@ class Decoder {
   final Map<String, String> facts;
   final Set<String> _vocabSet;
   final Map<int, List<String>> _byLen;
+  final List<RegExp> _lookalikes;
 
   Decoder._(this._allergens, this.caution, this.pages, this.cats, this._items, this._names, this._patterns, this.limits,
-      this.sources, this.facts, this._vocabSet, this._byLen);
+      this.sources, this.facts, this._vocabSet, this._byLen, this._lookalikes);
 
   /// Build from the three files in assets/data (decoder.json, decoder-data.json, inci-vocab.json).
   factory Decoder.fromJson(String decoderJson, String flagsJson, String vocabJson) {
@@ -118,6 +119,10 @@ class Decoder {
       Map<String, String>.from(d['facts'] as Map),
       vocab.toSet(),
       byLen,
+      ((dec['lookalikes'] ?? const []) as List).map((name) {
+        final words = _normFragrance(name as String).split(RegExp('[^a-z0-9]+')).where((w) => w.isNotEmpty);
+        return RegExp('(^|[^a-z0-9])${words.join('[^a-z0-9]*')}(?=\$|[^a-z0-9])');
+      }).toList(),
     );
   }
 
@@ -152,6 +157,15 @@ class Decoder {
   static final _plantOil = RegExp(
       r'\b(flower|leaf|leaves|peel|rind|bark|herb|needle|root|wood|twig|stem|resin|balsam|zest)\s+(oil|extract|absolute|water)\b|\b(lavandula|citrus|mentha|eucalyptus|rosmarinus|melaleuca|cymbopogon|pelargonium|jasminum|rosa\s+damascena|santalum|cedrus|pogostemon|cananga|ylang|thymus|origanum|salvia\s+sclarea|litsea|cinnamomum|eugenia\s+caryophyllus|syzygium)[a-z\s]*\s+oil\b',
       caseSensitive: false);
+
+  /// Real ingredient names that contain an allergen's name but are a different substance ("Ethyl Linalool" isn't
+  /// Linalool) are removed before allergens are matched, as on the website.
+  String _withoutLookalikes(String n) {
+    for (final re in _lookalikes) {
+      n = n.replaceAllMapped(re, (m) => '${m[1]} ');
+    }
+    return n;
+  }
 
   static String _normFragrance(String s) =>
       removeDiacritics(s.toLowerCase()).replaceAll(RegExp(r'\s+'), ' ').trim();
@@ -285,12 +299,13 @@ class Decoder {
     final seen = <String>{};
     for (final item in items) {
       final n = _normFragrance(item);
+      final na = _withoutLookalikes(n);
       for (final (re, label) in _fragranceWords) {
         if (re.hasMatch(item) && seen.add('f$label')) fragrance.add(FragranceHit(item, label));
       }
       var matched = false;
       for (final a in _allergens) {
-        if (a.re.hasMatch(n) && seen.add('a${a.name}')) {
+        if (a.re.hasMatch(na) && seen.add('a${a.name}')) {
           matched = true;
           allergens.add(AllergenHit(item, a.name, a.kind, a.note));
         }

@@ -1,9 +1,10 @@
 // Ground truth for test/decoder_parity_test.dart: run each case through the LIVE website decoder.
 //   NODE_PATH=... node test/parity/site_results.js > test/parity/site_results.json
+//   (CHROME=/usr/bin/google-chrome uses the system Chrome if Playwright's own browser isn't downloaded)
 const { chromium } = require('playwright');
 const cases = require('./cases.json');
 (async () => {
-  const b = await chromium.launch();
+  const b = await chromium.launch(process.env.CHROME ? { executablePath: process.env.CHROME } : {});
   const p = await b.newPage({ userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36' });
   const out = [];
   for (const c of cases) {

@@ -34,6 +34,7 @@ page = get(SITE + "/label-decoder/?app-fetch=1")
 dec, flags = inline(page, "ihpDecoder"), inline(page, "ihpDecoderFlagsCfg")
 OUT.mkdir(parents=True, exist_ok=True)
 (OUT / "decoder.json").write_text(json.dumps({"allergens": dec["allergens"], "caution": dec["caution"],
+                                              "lookalikes": dec.get("lookalikes", []),
                                               "pages": flags["pages"]}, ensure_ascii=False, separators=(",", ":")))
 for name, key in (("decoder-data.json", "url"), ("inci-vocab.json", "vocab")):
     (OUT / name).write_text(get(flags[key]))

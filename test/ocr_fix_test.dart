@@ -65,10 +65,12 @@ void main() {
         sug('Citric Acid, Glycerin, Butyrospermum Parkii Butter, Simmondsia Chinensis Seed Oil, Aqua (Water), '
             'Fragrance (Parfum), CI 77891, Glycerin 2%, PEG-40 Hydrogenated Castor Oil, Enzymes, Fragrance, Perfume'),
         isEmpty);
-    // Every parity case except the one with deliberate misspellings.
+    // Every parity case except the one with deliberate misspellings, and "Alpha-Pinene" in the lookalikes case,
+    // which isn't an official ingredient name (INCI has L-Alpha-Pinene; the website reads it the same way).
     final cases = (jsonDecode(File('test/parity/cases.json').readAsStringSync()) as List).cast<String>();
     for (var i = 0; i < cases.length; i++) {
-      expect(sug(cases[i]).keys, i == 2 ? ['Lim0nene', 'Methylparabn'] : isEmpty, reason: cases[i]);
+      final want = switch (i) { 2 => ['Lim0nene', 'Methylparabn'], 12 => ['Alpha-Pinene'], _ => <String>[] };
+      expect(sug(cases[i]).keys, want, reason: cases[i]);
     }
   });
 

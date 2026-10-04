@@ -499,5 +499,95 @@
     ]
    }
   ]
+ },
+ {
+  "verdict": "red",
+  "verdictText": "3 red flags: Cancer classification · Banned in EU cosmetics · Endocrine disruptor (EU)",
+  "fragrance": [],
+  "allergens": [
+   "d-Limonene",
+   "Linalool",
+   "Camphor",
+   "Alpha-Pinene"
+  ],
+  "plantOils": [],
+  "flags": [
+   {
+    "item": "Methyl Eugenol",
+    "guess": null,
+    "chips": [
+     "Cancer classification",
+     "Scent ingredient",
+     "Restricted in the EU",
+     "Limited by IFRA"
+    ]
+   },
+   {
+    "item": "4-Methylbenzylidene Camphor",
+    "guess": null,
+    "chips": [
+     "Banned in EU cosmetics",
+     "Endocrine disruptor (EU)"
+    ]
+   },
+   {
+    "item": "Ethyl Linalool",
+    "guess": null,
+    "chips": [
+     "Scent ingredient"
+    ]
+   },
+   {
+    "item": "Linalool Oxide",
+    "guess": null,
+    "chips": [
+     "Scent ingredient"
+    ]
+   },
+   {
+    "item": "d-Limonene",
+    "guess": null,
+    "chips": [
+     "Oxidizes into stronger allergens"
+    ]
+   },
+   {
+    "item": "Geranyl Linalool",
+    "guess": null,
+    "chips": [
+     "Scent ingredient"
+    ]
+   },
+   {
+    "item": "Linalool",
+    "guess": null,
+    "chips": [
+     "Skin allergen",
+     "Scent ingredient",
+     "Oxidizes into stronger allergens"
+    ]
+   },
+   {
+    "item": "Ethyl Vanillin",
+    "guess": null,
+    "chips": [
+     "Scent ingredient"
+    ]
+   },
+   {
+    "item": "Citral Dimethyl Acetal",
+    "guess": null,
+    "chips": [
+     "Scent ingredient"
+    ]
+   },
+   {
+    "item": "Alpha-Pinene",
+    "guess": " (read as “L-Alpha-Pinene”, check the spelling)",
+    "chips": [
+     "Scent ingredient"
+    ]
+   }
+  ]
  }
 ]
