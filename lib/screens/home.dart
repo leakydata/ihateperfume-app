@@ -4,6 +4,7 @@ import '../main.dart';
 import '../my_list.dart';
 import '../services.dart';
 import '../theme.dart';
+import 'no_list.dart';
 import 'result.dart';
 import 'scanner.dart';
 
@@ -52,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final run = ++_run;
     if (_list.isEmpty) return;
     for (final s in _recent.take(20)) {
+      if (s.text.isEmpty) continue; // a product with no ingredient list
       await Future<void>.delayed(Duration.zero);
       if (!mounted || run != _run) return;
       final level = checkList(decoder, ReportCache.get(decoder, s.text), _list).level;
@@ -160,7 +162,9 @@ class _RecentRow extends StatelessWidget {
     return Rule(
       padding: const EdgeInsets.symmetric(vertical: 9),
       onTap: () => Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => ResultScreen(text: s.text, name: s.name, barcode: s.barcode, source: s.source))),
+          builder: (_) => s.text.isEmpty && s.ihp != null
+              ? NoListScreen(name: s.name, barcode: s.barcode, info: s.ihp!)
+              : ResultScreen(text: s.text, name: s.name, barcode: s.barcode, source: s.source, ihp: s.ihp))),
       child: Row(children: [
         Expanded(
           child: Text.rich(TextSpan(children: [

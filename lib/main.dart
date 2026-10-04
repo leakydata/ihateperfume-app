@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'screens/about.dart';
+import 'screens/finds.dart';
 import 'screens/home.dart';
 import 'screens/legal.dart';
 import 'screens/my_list.dart';
@@ -164,16 +165,42 @@ class FirstRunNotice extends StatelessWidget {
   }
 }
 
-/// Bottom tabs: Scan, Search, My list, Learn.
+/// Bottom tabs: Scan, Search, Finds, My list, Learn.
 class Shell extends StatefulWidget {
   const Shell({super.key});
   static final tab = ValueNotifier(0);
   static final searchFocus = FocusNode();
+  static const findsTab = 2;
   @override
   State<Shell> createState() => _ShellState();
 }
 
 class _ShellState extends State<Shell> {
+  // The finds list is only fetched once its tab is opened.
+  final _findsShown = ValueNotifier(Shell.tab.value == Shell.findsTab);
+  late final _screens = [
+    const HomeScreen(),
+    const SearchScreen(),
+    FindsScreen(visible: _findsShown),
+    const MyListScreen(),
+    const AboutScreen(),
+  ];
+
+  void _onTab() => _findsShown.value = Shell.tab.value == Shell.findsTab;
+
+  @override
+  void initState() {
+    super.initState();
+    Shell.tab.addListener(_onTab);
+  }
+
+  @override
+  void dispose() {
+    Shell.tab.removeListener(_onTab);
+    _findsShown.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) => ValueListenableBuilder(
         valueListenable: Shell.tab,
@@ -187,7 +214,7 @@ class _ShellState extends State<Shell> {
             child: Scaffold(
               body: SafeArea(
                 bottom: false,
-                child: IndexedStack(index: i, children: const [HomeScreen(), SearchScreen(), MyListScreen(), AboutScreen()]),
+                child: IndexedStack(index: i, children: _screens),
               ),
               bottomNavigationBar: _Tabs(i),
             ),
@@ -204,6 +231,7 @@ class _Tabs extends StatelessWidget {
     const items = [
       (Icons.crop_free, 'Scan'),
       (Icons.search, 'Search'),
+      (Icons.check_box_outlined, 'Finds'),
       (Icons.bookmark_border, 'My list'),
       (Icons.menu_book_outlined, 'Learn'),
     ];

@@ -6,6 +6,7 @@ import '../my_list.dart';
 import '../report.dart';
 import '../services.dart';
 import '../theme.dart';
+import 'contribute.dart';
 import 'ingredient.dart';
 import 'my_list.dart';
 import 'review.dart';
@@ -15,6 +16,7 @@ const sourceNames = {
   'obf': 'From Open Beauty Facts',
   'opf': 'From Open Products Facts',
   'fda': 'From FDA drug label',
+  'ihp': 'Checked by I Hate Perfume',
   'photo': 'From your photo',
   'typed': 'Typed in',
 };
@@ -24,9 +26,10 @@ class ResultScreen extends StatefulWidget {
   final String? name;
   final String? barcode;
   final String source;
+  final IhpInfo? ihp; // when we reviewed it ourselves: from what, and when
   final bool save; // add to recent scans
   const ResultScreen(
-      {super.key, required this.text, this.name, this.barcode, required this.source, this.save = false});
+      {super.key, required this.text, this.name, this.barcode, required this.source, this.ihp, this.save = false});
   @override
   State<ResultScreen> createState() => _ResultScreenState();
 }
@@ -54,7 +57,7 @@ class _ResultScreenState extends State<ResultScreen> {
       ReportCache.put(widget.text, _r);
       if (widget.save) {
         final (tag, level) = _r.tag;
-        History.add(Scan(_name, widget.barcode, widget.text, widget.source, DateTime.now(), tag, level));
+        History.add(Scan(_name, widget.barcode, widget.text, widget.source, DateTime.now(), tag, level, ihp: widget.ihp));
       }
     });
   }
@@ -200,6 +203,8 @@ class _ResultScreenState extends State<ResultScreen> {
                       'formulas change.',
                       style: T.src(),
                     ),
+                  if (widget.source == 'ihp')
+                    Text('${ihpNote(widget.ihp)} Check it matches your package: formulas change.', style: T.src()),
                   if (maker != null)
                     InkWell(
                       onTap: () => openLink(context, maker.$1),
@@ -220,6 +225,19 @@ class _ResultScreenState extends State<ResultScreen> {
                         child: MonoLink('Edit the list', icon: Icons.arrow_forward)),
                   ),
                   _limits(),
+                  if (widget.barcode != null)
+                    InkWell(
+                      onTap: () => openContribute(context, barcode: widget.barcode, name: widget.name),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Text.rich(TextSpan(style: T.src(), children: const [
+                          TextSpan(text: 'Something wrong or missing? '),
+                          TextSpan(
+                              text: 'Send it to us',
+                              style: TextStyle(color: C.signal, fontWeight: FontWeight.w600)),
+                        ])),
+                      ),
+                    ),
                 ],
               ]),
             ),

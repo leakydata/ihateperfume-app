@@ -36,11 +36,12 @@ class Scan {
   final String name;
   final String? barcode;
   final String text;
-  final String source; // 'obf', 'opf', 'fda', 'photo', 'typed'
+  final String source; // 'obf', 'opf', 'fda', 'ihp', 'photo', 'typed'
   final DateTime at;
   final String tag; // summary chip, e.g. "3 scent"
   final int level;
-  const Scan(this.name, this.barcode, this.text, this.source, this.at, this.tag, this.level);
+  final IhpInfo? ihp; // our review details, for products we checked (text is empty when it has no list)
+  const Scan(this.name, this.barcode, this.text, this.source, this.at, this.tag, this.level, {this.ihp});
 
   Map<String, dynamic> toJson() => {
         'name': name,
@@ -50,10 +51,12 @@ class Scan {
         'at': at.toIso8601String(),
         'tag': tag,
         'level': level,
+        if (ihp != null) 'ihp': ihp!.toJson(),
       };
   static Scan fromJson(Map<String, dynamic> j) => Scan(j['name'] as String, j['barcode'] as String?,
       j['text'] as String, j['source'] as String, DateTime.parse(j['at'] as String), (j['tag'] ?? '') as String,
-      (j['level'] ?? 1) as int);
+      (j['level'] ?? 1) as int,
+      ihp: j['ihp'] is Map ? IhpInfo.fromJson((j['ihp'] as Map).cast<String, dynamic>()) : null);
 }
 
 class History {
@@ -72,7 +75,7 @@ class History {
 
   static Future<void> add(Scan s) async {
     final list = await all();
-    list.removeWhere((x) => (s.barcode != null && x.barcode == s.barcode) || x.text == s.text);
+    list.removeWhere((x) => (s.barcode != null && x.barcode == s.barcode) || (s.text.isNotEmpty && x.text == s.text));
     list.insert(0, s);
     final p = await SharedPreferences.getInstance();
     await p.setString(_key, jsonEncode(list.take(_max).map((x) => x.toJson()).toList()));
@@ -110,13 +113,18 @@ class Product {
   final String barcode;
   final String name;
   final String? ingredients;
-  final String source; // 'obf', 'opf', or 'fda'
-  const Product(this.barcode, this.name, this.ingredients, this.source);
+  final String source; // 'obf', 'opf', 'fda', or 'ihp'
+  final IhpInfo? ihp; // set for products we reviewed ourselves
+  const Product(this.barcode, this.name, this.ingredients, this.source, {this.ihp});
   String get sourceName => switch (source) {
         'obf' => 'Open Beauty Facts',
         'opf' => 'Open Products Facts',
+        'ihp' => 'I Hate Perfume',
         _ => 'openFDA',
       };
+
+  /// One of ours with no ingredient list on the package: shown with what the package says instead.
+  bool get noList => ingredients == null && (ihp?.noList ?? false);
 }
 
 class LookupError implements Exception {
@@ -130,7 +138,8 @@ const _userAgent = 'IHatePerfume-Android/1.0 (https://ihateperfume.com)';
 const _timeout = Duration(seconds: 10);
 
 /// Open Beauty Facts, then Open Products Facts, then the FDA's drug labels (for US over-the-counter products such
-/// as sunscreen and antiperspirant). Returns the first product that has an ingredient list, else the first one
+/// as sunscreen and antiperspirant), then the products we reviewed ourselves on ihateperfume.com (which may have
+/// no ingredient list, only what the package says about scent). Returns the first product that has an ingredient list, else the first one
 /// found without one, else null. Throws [LookupError] if none of them could be reached.
 Future<Product?> lookUp(String barcode, {http.Client? client}) async {
   final c = client ?? http.Client();
@@ -165,6 +174,10 @@ Future<Product?> lookUp(String barcode, {http.Client? client}) async {
     if (fdaReached) reached++;
     if (fda?.ingredients != null) return fda;
     nameOnly ??= fda;
+    final (ours, oursReached) = await lookUpIhp(barcode, c);
+    if (oursReached) reached++;
+    if (ours != null && (ours.ingredients != null || ours.noList)) return ours;
+    nameOnly ??= ours;
   } finally {
     if (client == null) c.close();
   }
@@ -419,3 +432,83 @@ String cleanOcr(String raw) {
   }
   return t.replaceAll(RegExp(r'[ \t]+'), ' ').replaceAll(RegExp(r'\s+,'), ',').trim();
 }
+
+// ---------- ihateperfume.com: products we reviewed ourselves (docs/app-api.md); only the barcode is sent ----------
+
+const ihpApi = 'https://ihateperfume.com/wp-json/ihp-app/v1';
+
+/// The User-Agent every request from the app carries (no device or user details).
+String get appUserAgent => _userAgent;
+
+/// What we recorded when we reviewed a product: what the package says about scent, when, and from what.
+class IhpInfo {
+  final String? says; // 'fragrance-free', 'unscented', 'no scent listed', 'scented', or null
+  final String checked; // '2026-10'
+  final String evidence; // 'package photo' or 'maker site'
+  final bool noList;
+  const IhpInfo({this.says, this.checked = '', this.evidence = '', this.noList = false});
+
+  Map<String, dynamic> toJson() => {'says': says, 'checked': checked, 'evidence': evidence, 'no_list': noList};
+  static IhpInfo fromJson(Map<String, dynamic> j) => IhpInfo(
+        says: _str(j['says']),
+        checked: _str(j['checked']) ?? '',
+        evidence: _str(j['evidence']) ?? '',
+        noList: j['no_list'] == true,
+      );
+}
+
+String? _str(Object? v) => v is String && v.trim().isNotEmpty ? v.trim() : null;
+
+/// A product from `GET /products/{barcode}`, or null if the answer isn't one.
+Product? parseIhpProduct(String barcode, Object? j) {
+  if (j is! Map) return null;
+  final m = j.cast<String, dynamic>();
+  final ing = _str(m['ingredients']);
+  final info = IhpInfo.fromJson(m);
+  if (ing == null && !info.noList) return null;
+  return Product(barcode, _str(m['name']) ?? '', ing, 'ihp', ihp: info);
+}
+
+/// Our own reviewed products: only the barcode is in the request. 404 or any error counts as not found.
+/// Returns (product or null, reached).
+Future<(Product?, bool)> lookUpIhp(String barcode, http.Client c) async {
+  if (!RegExp(r'^\d{8,14}$').hasMatch(barcode)) return (null, false);
+  try {
+    final res =
+        await c.get(Uri.parse('$ihpApi/products/$barcode'), headers: {'User-Agent': _userAgent}).timeout(_timeout);
+    if (res.statusCode != 200) return (null, true);
+    return (parseIhpProduct(barcode, jsonDecode(utf8.decode(res.bodyBytes))), true);
+  } on Exception {
+    return (null, false);
+  }
+}
+
+/// "2026-10" → "Oct 2026" (left as it is if it isn't a year and month).
+String monthYear(String ym) {
+  final m = RegExp(r'^(\d{4})-(\d{2})').firstMatch(ym);
+  final i = m == null ? 0 : int.parse(m[2]!);
+  if (i < 1 || i > 12) return ym;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return '${months[i - 1]} ${m![1]}';
+}
+
+/// "Reviewed by I Hate Perfume from a package photo (Oct 2026)."
+String ihpNote(IhpInfo? i) {
+  final from = switch (i?.evidence) {
+    'package photo' => 'a package photo',
+    'maker site' => 'the maker’s site',
+    _ => 'a package photo or the maker’s site',
+  };
+  final when = i == null || i.checked.isEmpty ? '' : ' (${monthYear(i.checked)})';
+  return 'Reviewed by I Hate Perfume from $from$when.';
+}
+
+/// The chip for what a package says about scent: its text and level (0 green when no scent is named, 3 red for
+/// scented).
+(String, int)? saysTag(String? says) => switch (says) {
+      'fragrance-free' => ('Says fragrance-free', 0),
+      'unscented' => ('Says unscented', 0),
+      'no scent listed' => ('No scent listed', 0),
+      'scented' => ('Scented', 3),
+      _ => null,
+    };

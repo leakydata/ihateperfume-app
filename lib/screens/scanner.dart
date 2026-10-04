@@ -1,6 +1,7 @@
 /// The scanner: barcode (ML Kit barcode scanning) or ingredient list (camera photo + ML Kit text recognition).
 /// Both run on the phone. Only a barcode number is ever sent anywhere, to Open Beauty Facts, Open Products Facts,
-/// and the FDA's openFDA service.
+/// the FDA's openFDA service, and ihateperfume.com (our own reviewed products). "Add it" opens the submission
+/// screen, which sends photos only when the user taps Send.
 library;
 
 import 'dart:io';
@@ -14,7 +15,9 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../services.dart';
 import '../theme.dart';
+import 'contribute.dart';
 import 'ingredient.dart' show openLink;
+import 'no_list.dart';
 import 'result.dart';
 import 'review.dart';
 
@@ -38,6 +41,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
   String? _barcode; // carried into the photo step when a barcode had no ingredient list
   String? _name;
   bool _torch = false;
+  bool _covered = false; // the "Add it" screen is on top and may be using the camera
 
   MobileScannerController? _scanner;
   CameraController? _camera;
@@ -68,7 +72,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
       _camera = null;
       c?.dispose();
       if (mounted) setState(() {});
-    } else if (state == AppLifecycleState.resumed && _camera == null) {
+    } else if (state == AppLifecycleState.resumed && _camera == null && !_covered) {
       _initCamera();
     }
   }
@@ -151,7 +155,13 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
       if (!mounted) return;
       if (p?.ingredients != null) {
         Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (_) => ResultScreen(text: p!.ingredients!, name: p.name, barcode: code, source: p.source, save: true)));
+            builder: (_) => ResultScreen(
+                text: p!.ingredients!, name: p.name, barcode: code, source: p.source, ihp: p.ihp, save: true)));
+        return;
+      }
+      if (p != null && p.noList) {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (_) => NoListScreen(name: p.name, barcode: code, info: p.ihp!, save: true)));
         return;
       }
       setState(() {
@@ -159,8 +169,8 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
         _barcode = code;
         _name = p?.name.isNotEmpty == true ? p!.name : null;
         _notice = p == null
-            ? 'Barcode $code isn’t in Open Beauty Facts, Open Products Facts, or the FDA’s drug labels. Photograph the '
-                'ingredient list instead.'
+            ? 'Barcode $code isn’t in Open Beauty Facts, Open Products Facts, the FDA’s drug labels, or ours. '
+                'Photograph the ingredient list instead.'
             : p.source == 'fda'
                 ? 'The FDA drug label for ${p.name.isEmpty ? 'this product' : p.name} has no inactive ingredient list. '
                     'Photograph the list instead.'
@@ -254,6 +264,20 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
       return;
     }
     _openReview(cleanOcr(text), ReviewKind.photo);
+  }
+
+  /// "Add it": send us this product. The camera is let go first, so the photo step can use it.
+  Future<void> _addIt() async {
+    _covered = true;
+    final c = _camera;
+    _camera = null;
+    await c?.dispose();
+    await _scanner?.stop();
+    if (!mounted) return;
+    setState(() {});
+    await openContribute(context, barcode: _barcode, name: _name);
+    _covered = false;
+    if (mounted) await _startMode();
   }
 
   void _openReview(String text, ReviewKind kind) => Navigator.of(context).push(MaterialPageRoute(
@@ -414,14 +438,24 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                   color: C.label, border: Border(left: BorderSide(color: C.signal, width: 6))),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(_notice!, style: T.lede.copyWith(fontSize: 14)),
-                if (_maker != null)
-                  InkWell(
-                    onTap: () => openLink(context, _maker!.$1),
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8, bottom: 2),
-                      child: MonoLink(_maker!.$2, size: 11),
+                Wrap(spacing: 18, children: [
+                  if (_barcode != null)
+                    InkWell(
+                      onTap: _busy == null ? _addIt : null,
+                      child: const Padding(
+                        padding: EdgeInsets.only(top: 8, bottom: 2),
+                        child: MonoLink('Add it', icon: Icons.arrow_forward, size: 11),
+                      ),
                     ),
-                  ),
+                  if (_maker != null)
+                    InkWell(
+                      onTap: () => openLink(context, _maker!.$1),
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8, bottom: 2),
+                        child: MonoLink(_maker!.$2, size: 11),
+                      ),
+                    ),
+                ]),
               ]),
             ),
           ),
