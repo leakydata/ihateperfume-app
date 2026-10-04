@@ -37,32 +37,35 @@ class _DataSettingState extends State<DataSetting> {
   @override
   Widget build(BuildContext context) => ValueListenableBuilder(
         valueListenable: dataStatus,
-        builder: (context, s, _) => Rule(
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Ingredient data', style: T.lede.copyWith(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 2),
-                Text(
-                  'Data ${s.label}'
-                  '${s.products > 0 ? ' · ${s.products} reviewed product${s.products == 1 ? '' : 's'}' : ''}. '
-                  'Checking sends nothing about you.',
-                  style: T.src(),
-                ),
-                if (_result != null)
-                  Padding(padding: const EdgeInsets.only(top: 4), child: Text(_result!, style: T.src(color: C.ink))),
-              ]),
-            ),
-            InkWell(
-              onTap: _busy ? null : _check,
-              child: Padding(
+        builder: (context, s, _) => Semantics(
+          button: true,
+          label: 'Check for new ingredient data',
+          // The whole row is the button: easier to hit than the small "Check now" label.
+          child: Rule(
+            onTap: _busy ? null : _check,
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Ingredient data', style: T.lede.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Data ${s.label}'
+                    '${s.products > 0 ? ' · ${s.products} reviewed product${s.products == 1 ? '' : 's'}' : ''}. '
+                    'Checking sends nothing about you.',
+                    style: T.src(),
+                  ),
+                  if (_result != null)
+                    Padding(padding: const EdgeInsets.only(top: 4), child: Text(_result!, style: T.src(color: C.ink))),
+                ]),
+              ),
+              Padding(
                 padding: const EdgeInsets.fromLTRB(12, 4, 0, 4),
                 child: _busy
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: C.signal))
                     : const Mono('Check now', color: C.signal),
               ),
-            ),
-          ]),
+            ]),
+          ),
         ),
       );
 }
