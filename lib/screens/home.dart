@@ -73,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
           InkWell(
             onTap: () {
               Shell.tab.value = 1;
-              Shell.searchFocus.requestFocus();
+              WidgetsBinding.instance.addPostFrameCallback((_) => Shell.searchFocus.requestFocus());
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

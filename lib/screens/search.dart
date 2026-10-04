@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../engine/decoder.dart';
 import '../main.dart';
-import '../report.dart';
 import '../services.dart';
 import '../theme.dart';
 import 'ingredient.dart';
+import 'result.dart';
 
 /// Search every ingredient name we know: flagged ones first, then the ~33,000 real names with no flags.
 class SearchScreen extends StatefulWidget {
@@ -59,8 +59,7 @@ class _SearchScreenState extends State<SearchScreen> {
     contains.sort(byLen);
     final out = <_Entry>[];
     for (final e in [...starts, ...contains].take(40)) {
-      final rep = Report.build(decoder, e.$1);
-      final row = rep.rows.isEmpty ? null : rep.rows.first;
+      final row = rowFor(e.$1, '');
       out.add(_Entry(e.$1, e.$2, row?.worst ?? 0, row?.chips.first.$1));
     }
     if (out.length < 40) {

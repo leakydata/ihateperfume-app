@@ -135,7 +135,7 @@ class _Tabs extends StatelessWidget {
                 child: InkWell(
                   onTap: () {
                     Shell.tab.value = i;
-                    if (i == 1) Shell.searchFocus.requestFocus();
+                    if (i == 1) WidgetsBinding.instance.addPostFrameCallback((_) => Shell.searchFocus.requestFocus());
                   },
                   child: Semantics(
                     selected: on == i,

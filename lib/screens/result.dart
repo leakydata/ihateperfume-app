@@ -258,7 +258,8 @@ class _ResultScreenState extends State<ResultScreen> {
 }
 
 /// Decode a single ingredient the same way, for the ingredient screen.
+/// List separators inside an official name ("Hymexazol (ISO); 3-hydroxy-…") are not separate ingredients.
 IngRow? rowFor(String name, ProductType ptype) {
-  final rep = Report.build(decoder, name, ptype: ptype);
+  final rep = Report.build(decoder, name.replaceAll(RegExp(r'[,;\n•·●|]+'), ' '), ptype: ptype);
   return rep.rows.isEmpty ? null : rep.rows.first;
 }

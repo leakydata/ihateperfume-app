@@ -180,5 +180,21 @@ String cleanOcr(String raw) {
   } else {
     t = lines.join('\n');
   }
+  // The list ends at a period followed by label text: a usual next heading ("Made in…", "Warning…"), or prose
+  // with no more commas.
+  final end = RegExp(
+          r'\.\s+(?=(made|distributed|dist\.|manufactured|mfd|warnings?|caution|directions|keep|for external|questions|net wt|contains)\b)',
+          caseSensitive: false)
+      .firstMatch(t);
+  if (end != null) {
+    t = t.substring(0, end.start + 1);
+  } else {
+    for (final m in RegExp(r'\.\s+(?=[A-Z])').allMatches(t)) {
+      if (!t.substring(m.end).contains(',')) {
+        t = t.substring(0, m.start + 1);
+        break;
+      }
+    }
+  }
   return t.replaceAll(RegExp(r'[ \t]+'), ' ').replaceAll(RegExp(r'\s+,'), ',').trim();
 }

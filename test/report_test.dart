@@ -44,5 +44,11 @@ void main() {
     expect(cleanOcr('Gentle wash\nINGREDIENTS: Water, Sodium Laureth\nSulfate, Methylisothia-\nzolinone, Parfum.'),
         'Water, Sodium Laureth Sulfate, Methylisothiazolinone, Parfum.');
     expect(cleanOcr('Water\nGlycerin\nParfum'), 'Water\nGlycerin\nParfum');
+    // Read from a test label photo on the phone: the footer must not stick to the last ingredient.
+    expect(cleanOcr('Directions: Apply to damp skin, rinse well.\nINGREDIENTS: Water, Glycerin, Lavandula '
+            'Angustifolia Oil.\nMade in USA. Distributed by Example Co.'),
+        'Water, Glycerin, Lavandula Angustifolia Oil.');
+    expect(cleanOcr('Ingredients: Water, Parfum. Avoid contact with eyes'), 'Water, Parfum.');
+    expect(cleanOcr('Ingredients: Alcohol Denat., Parfum, Aqua.'), 'Alcohol Denat., Parfum, Aqua.');
   });
 }
