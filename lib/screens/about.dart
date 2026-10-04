@@ -16,7 +16,7 @@ class AboutScreen extends StatelessWidget {
           onTap: () => openLink(context, url),
           child: Row(children: [
             Expanded(child: Text(t, style: T.lede.copyWith(fontWeight: FontWeight.w600))),
-            const Mono('↗', color: C.signal),
+            const Icon(Icons.north_east, size: 18, color: C.signal),
           ]),
         );
     return Column(children: [
@@ -72,7 +72,9 @@ class AboutScreen extends StatelessWidget {
                 context: context,
                 applicationName: 'I Hate Perfume',
                 applicationLegalese: 'Based on the I Hate Perfume app by ihateperfume.com (https://ihateperfume.com).'),
-            child: const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Mono('Open-source licenses →')),
+            child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: MonoLink('Open-source licenses', icon: Icons.arrow_forward, color: C.ink)),
           ),
         ]),
       ),

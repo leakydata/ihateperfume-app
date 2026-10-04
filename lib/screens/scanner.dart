@@ -277,7 +277,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                 InkWell(
                   onTap: () => Navigator.of(context).maybePop(),
                   child: const Padding(
-                      padding: EdgeInsets.fromLTRB(0, 10, 14, 10), child: Mono('←', size: 16, color: C.paper)),
+                      padding: EdgeInsets.fromLTRB(0, 10, 14, 10), child: Icon(Icons.arrow_back, size: 20, color: C.paper)),
                 ),
                 Expanded(
                   child: Container(

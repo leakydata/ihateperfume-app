@@ -50,7 +50,7 @@ class _IngredientScreenState extends State<IngredientScreen> {
                 ? null
                 : InkWell(
                     onTap: () => openLink(context, page),
-                    child: const Padding(padding: EdgeInsets.all(8), child: Mono('ihateperfume.com ↗', color: C.signal)),
+                    child: const Padding(padding: EdgeInsets.all(8), child: MonoLink('ihateperfume.com')),
                   ),
           ),
           Expanded(
@@ -125,13 +125,7 @@ class _IngredientScreenState extends State<IngredientScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         InkWell(
           onTap: () => setState(() => open ? _open.remove(i) : _open.add(i)),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Expanded(child: Text(x.title, style: T.name.copyWith(fontSize: 16))),
-            Padding(
-              padding: const EdgeInsets.only(left: 8, top: 2),
-              child: Tag(x.level == 3 ? 'Red' : (x.level == 2 ? 'Amber' : 'Note'), level: x.level, size: 9),
-            ),
-          ]),
+          child: Text(x.title, style: T.name.copyWith(fontSize: 16)),
         ),
         if (open && (x.help.isNotEmpty || x.label != x.title))
           Padding(
@@ -145,7 +139,12 @@ class _IngredientScreenState extends State<IngredientScreen> {
           child: Text.rich(TextSpan(style: T.src(), children: [
             TextSpan(text: detail),
             TextSpan(text: 'Source: ${x.source}'),
-            if (x.url != null) const TextSpan(text: ' ↗', style: TextStyle(color: C.signal)),
+            if (x.url != null)
+              const WidgetSpan(
+                alignment: PlaceholderAlignment.middle,
+                child: Padding(
+                    padding: EdgeInsets.only(left: 4), child: Icon(Icons.north_east, size: 13, color: C.signal)),
+              ),
           ])),
         ),
         if (!open && (x.help.isNotEmpty || x.label != x.title))
@@ -163,7 +162,7 @@ class _IngredientScreenState extends State<IngredientScreen> {
         onTap: () => openLink(context, url),
         child: Row(children: [
           Expanded(child: Text(text, style: T.lede.copyWith(fontWeight: FontWeight.w600))),
-          const Mono('↗', color: C.signal),
+          const Icon(Icons.north_east, size: 18, color: C.signal),
         ]),
       );
 }

@@ -38,6 +38,7 @@ class _AppState extends State<App> {
         title: 'I Hate Perfume',
         debugShowCheckedModeBanner: false,
         theme: appTheme(),
+        builder: (context, child) => AnnotatedRegion(value: SystemUiOverlayStyle.dark, child: child!),
         home: FutureBuilder(
           future: _ready,
           builder: (context, snap) {

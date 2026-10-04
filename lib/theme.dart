@@ -154,9 +154,16 @@ class TopBar extends StatelessWidget {
   const TopBar({super.key, required this.left, this.right});
 
   /// "← Scan" style back link.
-  static Widget back(BuildContext context, String label) => InkWell(
-        onTap: () => Navigator.of(context).maybePop(),
-        child: Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Mono('← $label')),
+  static Widget back(BuildContext context, String label, {VoidCallback? onTap}) => InkWell(
+        onTap: onTap ?? () => Navigator.of(context).maybePop(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.arrow_back, size: 16, color: C.ink),
+            const SizedBox(width: 6),
+            Mono(label),
+          ]),
+        ),
       );
 
   @override
@@ -169,6 +176,21 @@ class TopBar extends StatelessWidget {
           children: [Flexible(child: left), ?right],
         ),
       );
+}
+
+/// Mono label followed by an arrow icon (the bundled fonts have no arrow glyphs).
+class MonoLink extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  final Color color;
+  final double size;
+  const MonoLink(this.text, {super.key, this.icon = Icons.north_east, this.color = C.signal, this.size = 12});
+  @override
+  Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
+        Mono(text, color: color, size: size),
+        const SizedBox(width: 4),
+        Icon(icon, size: size + 3, color: color),
+      ]);
 }
 
 /// Cream panel with the red left rule.

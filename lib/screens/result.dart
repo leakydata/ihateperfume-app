@@ -92,8 +92,7 @@ class _ResultScreenState extends State<ResultScreen> {
         body: SafeArea(
           child: Column(children: [
             TopBar(
-              left: InkWell(
-                  onTap: _home, child: const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Mono('← Scan'))),
+              left: TopBar.back(context, 'Scan', onTap: _home),
               right: r.empty
                   ? null
                   : InkWell(
@@ -184,7 +183,8 @@ class _ResultScreenState extends State<ResultScreen> {
                             name: widget.name,
                             source: widget.source))),
                     child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 10), child: Mono('Edit the list →', color: C.signal)),
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: MonoLink('Edit the list', icon: Icons.arrow_forward)),
                   ),
                   _limits(),
                 ],
