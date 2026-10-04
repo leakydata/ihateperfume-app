@@ -79,3 +79,28 @@ WP-admin review screen, where a moderator reads the photos, types or corrects th
 fills in name/brand/says/category, and approves (→ `/products/{barcode}` and, for no-list products,
 `/finds`) or rejects (photos deleted). Approved photos are kept only as long as needed for review
 and then deleted; nothing personal is ever published.
+
+## `POST /wanted` (opt-in "Ask us to find it")
+Sent only when the user tapped "Ask us to find it", or chose "Send missing barcodes automatically" in the one-time
+sheet (off unless they say yes; changeable in Learn). `application/x-www-form-urlencoded`: `barcode` (8–14 digits),
+`app`. Nothing else. `202 {"ok": true}` (also when the barcode was already wanted), `400` bad barcode, `429` over the
+limit (50 per IP hash per day, same daily-salted HMAC as submissions; IPs never stored).
+Server keeps per barcode: count, first asked, last asked (dates only). When a product with that barcode is approved,
+its wanted entry is removed. A 12-digit UPC-A and its 13-digit form count as one.
+
+The app keeps the barcodes the user asked about in a private list on the phone (max 100, oldest dropped). At most once
+a day, after start, it re-checks them with `GET /products/{barcode}` (one request per barcode, max 20 per day,
+same User-Agent, nothing else) and, if any were added, shows "We found N products you asked about." Found or
+older-than-180-days barcodes leave the list.
+
+## Admin only (no public endpoints)
+- **Most wanted** tab: wanted barcodes by count (then last asked), with "Add it" (pre-filled product form) and
+  "Check Walmart's photos".
+- **Check Walmart's photos** (also on each pending submission with a barcode): the server signs a Walmart affiliate
+  API lookup with the key in a file outside the web root (path and consumer ID set in wp-config.php:
+  `IHP_APP_WALMART_KEY_FILE`, `IHP_APP_WALMART_CONSUMER_ID`, `IHP_APP_WALMART_KEY_VERSION`) and shows Walmart's
+  product name and photos to the reviewer. Nothing from Walmart is stored or cached, and nothing reaches the app.
+  Disabled when the constants aren't set.
+- **Send to Open Beauty Facts** on approved products: posts the factual fields (barcode, product name, brand,
+  ingredient list) to Open Beauty Facts' write API under the project's account. Disabled until
+  `IHP_APP_OBF_USER` / `IHP_APP_OBF_PASSWORD` are set in wp-config.php. Never sends user photos.
