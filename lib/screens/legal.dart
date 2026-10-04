@@ -161,7 +161,8 @@ const privacyDoc = LegalDoc('Privacy policy', _updated, [
     Li('Fragrance-free finds. When you open the Finds tab, or pull to refresh it, the app downloads the list from '
         'ihateperfume.com. Nothing about you is sent.'),
     Li('Products you send us. Only if you choose to send us a product. You see exactly what will be sent before you '
-        'tap Send: your photos of the package and the ingredient list, the barcode, and anything you typed or ticked. '
+        'tap Send: your photos of the package and its ingredient list (and any optional extra photos you add, such as '
+        'the back or sides), the barcode, and anything you typed or ticked. '
         'Location and all other photo details are removed on your phone before anything is sent, and your original '
         'photos aren’t changed. We keep the photos privately, never publish them, and delete them once we’ve reviewed '
         'them. If we approve the product, its name, ingredient list, and what the package says are published in the '
