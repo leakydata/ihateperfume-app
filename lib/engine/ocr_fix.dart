@@ -5,6 +5,7 @@
 /// each issue and the user taps to fix or remove it. Runs on the phone; the decoder's matching is untouched.
 library;
 
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'decoder.dart';
@@ -52,18 +53,29 @@ class _Fix extends Issue {
 }
 
 class OcrFix {
-  final List<String> _names; // normalized known names
-  final Set<String> _known;
-  final List<int> _group; // same value = same flagged ingredient (ties between them are fine)
+  final List<String> _names; // normalized known names (the decoder's own strings, not copies)
+  final Decoder _decoder; // its vocabulary and names are known names, without a second set of them
+  final Set<String> _extra; // the other known names: flagged names and allergens as written, fragrance words
+  final Int32List _group; // same value = same flagged ingredient (ties between them are fine)
   final Map<String, String> _display; // normalized -> as written, for flagged names and allergens
-  final List<Int32List?> _postings; // trigram -> name indexes
+  // Trigram -> name indexes in one array (CSR): the names with trigram g are
+  // postings[_gramStart[g] .. _gramStart[g + 1]), in ascending order. 16 bits each while there are at most 65,536
+  // names (about 32,000 today), else 32.
+  final Int32List _gramStart;
+  final Uint16List? _postings16;
+  final Int32List? _postings32;
   final Int32List _count;
-
   final Set<String> _words; // every word of a known name ("vitamin", "shea", "rose")
 
-  OcrFix._(this._names, this._known, this._group, this._display, this._postings)
-      : _count = Int32List(_names.length),
-        _words = {for (final n in _names) ...n.split(' '), ..._commonWords};
+  OcrFix._(this._decoder, _Index x, this._group)
+      : _names = x.names,
+        _extra = x.extra,
+        _display = x.display,
+        _gramStart = x.gramStart,
+        _postings16 = x.postings16,
+        _postings32 = x.postings32,
+        _words = x.words,
+        _count = Int32List(x.names.length);
 
   // Common names labels put in brackets after the INCI name, which INCI names themselves don't use.
   static const _commonWords = {
@@ -71,34 +83,39 @@ class OcrFix {
     'eau', 'agua', 'acqua', 'wasser',
   };
 
-  /// Build the index once (about 32,000 names).
+  /// Build the index (about 32,000 names) here and now.
   factory OcrFix(Decoder d) {
-    final display = <String, String>{};
-    for (final n in [...d.flaggedNames, ...d.allergenNames]) {
-      final k = Decoder.norm(n);
-      if (k.isNotEmpty && n.contains(RegExp('[A-Z]'))) display.putIfAbsent(k, () => n);
-    }
-    final known = <String>{
-      ...d.vocab,
-      ...d.knownNames,
-      for (final n in [...d.flaggedNames, ...d.allergenNames]) Decoder.norm(n),
-      // The decoder's own fragrance words.
-      'fragrance', 'parfum', 'perfume', 'aroma', 'flavor', 'flavour', 'essential oil', 'essential oils',
-    }..remove('');
-    final names = known.toList();
-    final group = <int>[for (var i = 0; i < names.length; i++) d.itemIndex(names[i]) ?? -1 - i];
-    final lists = List<List<int>?>.filled(_gramSpace, null);
-    for (var i = 0; i < names.length; i++) {
-      for (final g in _grams(names[i])) {
-        final l = lists[g] ??= <int>[];
-        if (l.isEmpty || l.last != i) l.add(i);
-      }
-    }
-    final postings = [for (final l in lists) l == null ? null : Int32List.fromList(l)];
-    return OcrFix._(names, known, group, display, postings);
+    final x = _Index.make(d.vocab, d.knownNames, [...d.flaggedNames, ...d.allergenNames]);
+    return OcrFix._(d, x, _groups(d, x.names));
   }
 
-  bool isKnown(String normalized) => _known.contains(normalized);
+  /// Build the index in another isolate from the decoder that is already loaded. Only the names go over (strings
+  /// are shared between isolates, not copied), and the index comes back without a copy.
+  static Future<OcrFix> build(Decoder d) async {
+    final vocab = d.vocab, known = d.knownNames.toList(), named = [...d.flaggedNames, ...d.allergenNames];
+    final x = await Isolate.run(() => _Index.make(vocab, known, named));
+    return OcrFix._(d, x, _groups(d, x.names));
+  }
+
+  static Int32List _groups(Decoder d, List<String> names) {
+    final g = Int32List(names.length);
+    for (var i = 0; i < names.length; i++) {
+      g[i] = d.itemIndex(names[i]) ?? -1 - i;
+    }
+    return g;
+  }
+
+  /// Bytes in the index's arrays (for measuring; the name strings are the decoder's).
+  int get arrayBytes =>
+      _gramStart.lengthInBytes +
+      (_postings16?.lengthInBytes ?? 0) +
+      (_postings32?.lengthInBytes ?? 0) +
+      _group.lengthInBytes +
+      _count.lengthInBytes;
+
+  bool isKnown(String normalized) =>
+      normalized.isNotEmpty &&
+      (_decoder.vocab.contains(normalized) || _decoder.itemIndex(normalized) != null || _extra.contains(normalized));
 
   // ---------- splitting with positions (mirrors Decoder.split) ----------
 
@@ -189,7 +206,7 @@ class OcrFix {
       final tk = Decoder.norm(tail);
       if (headBare.isNotEmpty &&
           _recognized(headBare) &&
-          _known.contains(tk) &&
+          isKnown(tk) &&
           _letters(tk) >= 4 &&
           !_continues.contains(tk.split(' ').first) &&
           !_recognized(Decoder.norm(item.replaceAll(_bracketGroup, ' ')))) {
@@ -298,12 +315,12 @@ class OcrFix {
 
   /// A known name, a color index number, "Glycerin 2%", or a plural or singular of a known name.
   bool _recognized(String k) {
-    if (_known.contains(k) || _ciNumber.hasMatch(k)) return true;
+    if (isKnown(k) || _ciNumber.hasMatch(k)) return true;
     final bare = k.replaceFirst(_trailingNumbers, '');
-    if (bare != k && _known.contains(bare)) return true;
+    if (bare != k && isKnown(bare)) return true;
     // Plural or singular of a known name ("Enzymes", "Fragrances").
-    if (k.endsWith('s') && _known.contains(k.substring(0, k.length - 1))) return true;
-    if (_known.contains('${k}s')) return true;
+    if (k.endsWith('s') && isKnown(k.substring(0, k.length - 1))) return true;
+    if (isKnown('${k}s')) return true;
     return false;
   }
 
@@ -322,7 +339,7 @@ class OcrFix {
       var phrase = '';
       for (var j = i; j < w.length && j < i + 6; j++) {
         phrase = j == i ? w[i] : '$phrase ${w[j]}';
-        if (_letters(phrase) >= 4 && _known.contains(phrase)) return true;
+        if (_letters(phrase) >= 4 && isKnown(phrase)) return true;
       }
     }
     return false;
@@ -347,10 +364,10 @@ class OcrFix {
       final head = raw.substring(0, m.start), tail = raw.substring(m.end);
       if (head.contains(_hasParts)) break; // only a plain name before the gap
       final hk = Decoder.norm(head), tk = Decoder.norm(tail);
-      if (_letters(hk) < 4 || _letters(tk) < 4 || !_known.contains(hk)) continue;
+      if (_letters(hk) < 4 || _letters(tk) < 4 || !isKnown(hk)) continue;
       final tw = tk.split(' ');
       if (_continues.contains(tw.first)) continue; // "... Seed Oil" carries the name on
-      if (_known.contains(tk)) return ('$head, $tail', 1);
+      if (isKnown(tk)) return ('$head, $tail', 1);
       // A misread tail: only a name of two or more words, so one short word is never guessed ("Sodium Octrate").
       if (tw.length < 2) continue;
       final f = _fix(tail, tk);
@@ -411,7 +428,7 @@ class OcrFix {
   (String, String)? _splitTwo(String k) {
     for (var i = k.indexOf(' '); i > 0; i = k.indexOf(' ', i + 1)) {
       final a = k.substring(0, i), b = k.substring(i + 1);
-      if (a.length >= 3 && b.length >= 3 && _known.contains(a) && _known.contains(b)) return (a, b);
+      if (a.length >= 3 && b.length >= 3 && isKnown(a) && isKnown(b)) return (a, b);
     }
     return null;
   }
@@ -421,10 +438,10 @@ class OcrFix {
     final q = <int>{..._grams(k), ..._grams(_foldDigits(k)), ..._grams(k.replaceAll('rn', 'm'))};
     final own = _grams(k).length;
     final touched = <int>[];
+    final p16 = _postings16, p32 = _postings32;
     for (final g in q) {
-      final p = _postings[g];
-      if (p == null) continue;
-      for (final i in p) {
+      for (var j = _gramStart[g], end = _gramStart[g + 1]; j < end; j++) {
+        final i = p16 != null ? p16[j] : p32![j];
         if (_count[i]++ == 0) touched.add(i);
       }
     }
@@ -695,5 +712,73 @@ class OcrFix {
         !_isSep(left.codeUnitAt(0)) &&
         !_isSep(right.codeUnitAt(0));
     return text.replaceRange(s, e, space ? ' ' : '');
+  }
+}
+
+/// The names and their trigram index, built from plain lists so it can be built in another isolate.
+class _Index {
+  final List<String> names;
+  final Set<String> extra;
+  final Map<String, String> display;
+  final Int32List gramStart;
+  final Uint16List? postings16;
+  final Int32List? postings32;
+  final Set<String> words;
+  _Index(this.names, this.extra, this.display, this.gramStart, this.postings16, this.postings32, this.words);
+
+  factory _Index.make(Set<String> vocab, Iterable<String> knownNames, List<String> named) {
+    final display = <String, String>{};
+    final namedNorm = [for (final n in named) Decoder.norm(n)];
+    for (var i = 0; i < named.length; i++) {
+      final k = namedNorm[i];
+      if (k.isNotEmpty && named[i].contains(RegExp('[A-Z]'))) display.putIfAbsent(k, () => named[i]);
+    }
+    final extra = <String>{
+      ...namedNorm,
+      // The decoder's own fragrance words.
+      'fragrance', 'parfum', 'perfume', 'aroma', 'flavor', 'flavour', 'essential oil', 'essential oils',
+    }..remove('');
+    final names = (<String>{...vocab, ...knownNames, ...extra}..remove('')).toList(growable: false);
+    // Two passes over the trigrams: count each list's length, then fill one array.
+    const space = OcrFix._gramSpace;
+    final start = Int32List(space + 1);
+    final last = Int32List(space)..fillRange(0, space, -1); // the last name added to each list
+    final fill = Int32List(space);
+    for (var pass = 0; pass < 2; pass++) {
+      final small = names.length <= 65536;
+      final p16 = pass == 1 && small ? Uint16List(start[space]) : null;
+      final p32 = pass == 1 && !small ? Int32List(start[space]) : null;
+      for (var i = 0; i < names.length; i++) {
+        // The same trigrams as OcrFix._grams: the string padded with a 0 code at each end.
+        final s = names[i];
+        var a = 0, b = s.isEmpty ? 0 : OcrFix._code(s.codeUnitAt(0));
+        for (var j = 0; j < s.length; j++) {
+          final c = j + 1 < s.length ? OcrFix._code(s.codeUnitAt(j + 1)) : 0;
+          final g = (a * 40 + b) * 40 + c;
+          if (last[g] != i) {
+            last[g] = i;
+            if (pass == 0) {
+              start[g + 1]++;
+            } else if (p16 != null) {
+              p16[fill[g]++] = i;
+            } else {
+              p32![fill[g]++] = i;
+            }
+          }
+          a = b;
+          b = c;
+        }
+      }
+      if (pass == 1) {
+        final words = {for (final n in names) ...n.split(' '), ...OcrFix._commonWords};
+        return _Index(names, extra, display, start, p16, p32, words);
+      }
+      for (var g = 0; g < space; g++) {
+        start[g + 1] += start[g];
+        fill[g] = start[g];
+      }
+      last.fillRange(0, space, -1);
+    }
+    throw StateError('unreachable');
   }
 }
