@@ -36,7 +36,7 @@ Future<WantedMode?> showWantedSheet(BuildContext context) async {
           Btn('Send missing barcodes automatically',
               size: 17, padding: const EdgeInsets.all(12), onTap: () => Navigator.pop(c, WantedMode.auto)),
           const SizedBox(height: 10),
-          Btn('Ask me each time',
+          Btn('Send just this one',
               ghost: true, size: 17, padding: const EdgeInsets.all(12), onTap: () => Navigator.pop(c, WantedMode.ask)),
           const SizedBox(height: 4),
           Center(
@@ -99,9 +99,9 @@ class _AskToFindState extends State<AskToFind> {
 
   Future<void> _tap() async {
     if (_sending) return;
-    var m = _mode;
-    if (m == null) {
-      m = await showWantedSheet(context);
+    // The sheet asks every time until the user chooses "Send missing barcodes automatically".
+    if (_mode != WantedMode.auto) {
+      final m = await showWantedSheet(context);
       if (!mounted || m == null) return; // closed without choosing: nothing sent
       setState(() => _mode = m);
       if (m == WantedMode.off) return;

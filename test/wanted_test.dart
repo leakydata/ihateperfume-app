@@ -70,24 +70,39 @@ void main() {
       expect(find.text(ask), findsOneWidget);
     });
 
-    testWidgets('"Ask me each time": sends this one; next time the link sends without the sheet', (t) async {
+    testWidgets('"Send just this one": sends this one; next time the sheet asks again', (t) async {
       final f = FakeSend();
       await pumpAsk(t, f, '0123456789012');
       await t.tap(find.text(ask));
       await t.pumpAndSettle();
-      await t.tap(find.text('ASK ME EACH TIME'));
+      await t.tap(find.text('SEND JUST THIS ONE'));
       await t.pumpAndSettle();
       expect(await Wanted.mode(), WantedMode.ask);
       expect(f.sent, ['0123456789012']);
       expect(find.text('Sent. We’ll look for it.'), findsOneWidget);
 
-      // Another miss: the link is there, nothing goes until it's tapped, and no sheet.
+      // Another miss: nothing goes until the link is tapped, and then the sheet asks again.
       await pumpAsk(t, f, '11112222');
       expect(f.sent, ['0123456789012']);
       await t.tap(find.text(ask));
       await t.pumpAndSettle();
-      expect(find.text('HELP FILL THE GAPS.'), findsNothing);
+      expect(find.text('HELP FILL THE GAPS.'), findsOneWidget);
+      expect(f.sent, ['0123456789012']); // still nothing until a choice
+      await t.tap(find.text('SEND JUST THIS ONE'));
+      await t.pumpAndSettle();
       expect(f.sent, ['0123456789012', '11112222']);
+    });
+
+    testWidgets('closing the sheet again sends nothing', (t) async {
+      final f = FakeSend();
+      await Wanted.setMode(WantedMode.ask);
+      await pumpAsk(t, f, '0123456789012');
+      await t.tap(find.text(ask));
+      await t.pumpAndSettle();
+      expect(find.text('HELP FILL THE GAPS.'), findsOneWidget);
+      await t.tapAt(const Offset(10, 10)); // outside the sheet
+      await t.pumpAndSettle();
+      expect(f.sent, isEmpty);
     });
 
     testWidgets('"automatically": sends now, and future misses with no taps', (t) async {
@@ -125,6 +140,8 @@ void main() {
       await Wanted.setMode(WantedMode.ask);
       await pumpAsk(t, f, '0123456789012');
       await t.tap(find.text(ask));
+      await t.pumpAndSettle();
+      await t.tap(find.text('SEND JUST THIS ONE'));
       await t.pumpAndSettle();
       expect(find.text('Couldn’t send it. Try again later.'), findsOneWidget);
       expect(find.text(ask), findsOneWidget);
