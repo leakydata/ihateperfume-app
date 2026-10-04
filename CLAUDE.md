@@ -19,8 +19,9 @@ CLAUDE.md holds the evidence, voice, spelling, and serial-comma rules, and they 
 `design/mockups.png` (source `design/mockups.html`) is THE design guide: website palette (ink #111111,
 signal #C4361B, signal-dark #9E2A14, signal-light #FF8A6E, label #F3F1EC, paper #FFFFFF), Archivo condensed caps
 for headlines, IBM Plex Mono for labels (fonts in design/fonts). Screens: home, scanner (barcode | ingredient
-list), result, ingredient, not-found contribute, fragrance-free finds. Icon: red scan corners + crossed-out
-bottle. Name: "I Hate Perfume" (store title "I Hate Perfume: Fragrance Scanner"); "Unmasked" rejected (an
+list), result, ingredient, not-found contribute, fragrance-free finds. Icon: red no-perfume circle (ring + white
+bottle + slash, design/icon/icon.svg), all inside the 66dp safe zone because the Pixel crops icons to a circle
+(the first version's scan corners were cut off). Name: "I Hate Perfume" (store title "I Hate Perfume: Fragrance Scanner"); "Unmasked" rejected (an
 autism/ADHD app uses it). Tagline "Scan it. Unmask it." The owner also wants a small "IHP" mark for tiny icons.
 
 ## Engine

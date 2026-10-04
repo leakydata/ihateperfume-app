@@ -150,8 +150,8 @@ const privacyDoc = LegalDoc('Privacy policy', _updated, [
         '(world.openbeautyfacts.org); if it finds no ingredient list there, to Open Products Facts '
         '(world.openproductsfacts.org); and if it still finds none, to the U.S. Food and Drug Administration’s '
         'openFDA service (api.fda.gov), which has the labels of over-the-counter drugs such as sunscreen. Only the '
-        'barcode number is sent. The request names the app in the same way for everyone; it carries no account, '
-        'device ID, or location. Like any website, these services see your IP address and may keep logs. Their '
+        'barcode number is sent. Every copy of the app identifies itself the same way, and the request carries no '
+        'account, device ID, or location. Like any website, these services see your IP address and may keep logs. Their '
         'privacy policies explain what they keep.'),
     Li('Maker links. After a barcode scan, the app shows a link to the maker’s own ingredient page (for P&G '
         'products) or to SmartLabel’s product search (smartlabel.org, run by the Consumer Brands Association). '
