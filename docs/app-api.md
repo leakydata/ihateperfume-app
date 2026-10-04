@@ -60,12 +60,17 @@ Only reviewed entries appear. Never "safe"; "scented" entries are listed too, as
 - `name` (optional, ≤ 120 chars)
 - `says_fragrance_free`, `says_unscented`, `no_list` (each "0" or "1": the "The package says" checkboxes)
 - `category` (optional, one of the finds categories, or "Other")
-- `front` (JPEG, required, ≤ 2.5 MB, longest side ≤ 2000 px; metadata stripped on the phone)
-- `ingredients` (JPEG, required unless `no_list` = "1", same limits)
+- `front` (JPEG, required: the front of the package)
+- `ingredients` (JPEG, required unless `no_list` = "1": the ingredient list), plus optional `ingredients_2` and
+  `ingredients_3` when the list wraps around a bottle (order matters: they're read left to right)
+- `extra_1`, `extra_2`, `extra_3` (JPEG, optional: back, sides, bottom, or anything else that shows a claim such as
+  "scented" or "unscented", or the barcode)
+- Every photo: ≤ 2.5 MB, longest side ≤ 2000 px, metadata stripped on the phone. At most 7 photos; separate field
+  names (no arrays). A whole request is at most 18 MB.
 - `app` (e.g. "1.0.0+1")
 
 Responses: `201 {"ok": true, "ref": "S-7F3K2"}` (a short reference the user can quote),
-`400 {"ok": false, "error": "…"}` (plain-English message the app can show),
+`400 {"ok": false, "error": "…"}` (plain-English message the app can show, naming the photo that failed),
 `429` when over the limit (10 submissions per IP hash per day), `413` when too big.
 
 Server side: the photo bytes are re-checked (real JPEG, size limits) and metadata is stripped again;
