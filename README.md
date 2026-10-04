@@ -1,0 +1,25 @@
+# I Hate Perfume app (name to be decided)
+
+Native Android app (Flutter, so iOS can follow) for finding fragrance in products: scan a barcode or photograph
+the ingredient list, see which ingredients are scent ingredients or fragrance allergens and why, and find
+fragrance-free products that have no ingredient list at all (trash bags, laundry, paper goods).
+
+Companion to [ihateperfume.com](https://ihateperfume.com) (repo: leakydata/ihateperfume), which publishes the
+ingredient data and reviews submitted products.
+
+## Promises
+- No account, no ads, no tracking. Free.
+- Barcode reading, text recognition, and ingredient matching run on the phone. Photos leave the phone only when
+  the user chooses to submit a missing product, with location data stripped.
+- Every flag names its source. The app never says a product is "safe".
+- Never state or imply that fragrance causes autism.
+
+## Design
+`design/mockups.png` (source `design/mockups.html`) is the design guide: the website's palette
+(ink #111111, signal #C4361B, label #F3F1EC, paper #FFFFFF), Archivo condensed caps for headlines,
+IBM Plex Mono for labels.
+
+## Data
+- Ingredient matching: the website label decoder's dataset (`decoder-data.json`, about 140 KB compressed), bundled
+  for offline use and refreshed from ihateperfume.com.
+- Barcodes: Open Beauty Facts and Open Products Facts (ODbL, credit required), then our own reviewed submissions.
