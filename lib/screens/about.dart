@@ -4,6 +4,7 @@ import '../services.dart';
 import '../theme.dart';
 import 'ingredient.dart';
 import 'legal.dart';
+import 'wanted.dart';
 
 /// "Learn": what the app promises, where the data comes from, and the required attribution.
 class AboutScreen extends StatelessWidget {
@@ -69,6 +70,8 @@ class AboutScreen extends StatelessWidget {
           link('Open Products Facts', 'https://world.openproductsfacts.org'),
           link('Open Database License (ODbL)', 'https://opendatacommons.org/licenses/odbl/1-0/'),
           link('openFDA', 'https://open.fda.gov'),
+          h('Settings'),
+          const WantedSetting(),
           h('Terms and privacy'),
           p('Information, not medical advice. Never a guarantee: always read the package.'),
           page('Terms and disclaimer', termsDoc),

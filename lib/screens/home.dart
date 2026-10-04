@@ -7,6 +7,7 @@ import '../theme.dart';
 import 'no_list.dart';
 import 'result.dart';
 import 'scanner.dart';
+import 'wanted.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -98,6 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ]),
           ),
           const SizedBox(height: 16),
+          const FoundPanel(),
           InkWell(
             onTap: () {
               Shell.tab.value = 1;

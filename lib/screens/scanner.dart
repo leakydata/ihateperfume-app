@@ -1,7 +1,8 @@
 /// The scanner: barcode (ML Kit barcode scanning) or ingredient list (camera photo + ML Kit text recognition).
 /// Both run on the phone. Only a barcode number is ever sent anywhere, to Open Beauty Facts, Open Products Facts,
 /// the FDA's openFDA service, and ihateperfume.com (our own reviewed products). "Add it" opens the submission
-/// screen, which sends photos only when the user taps Send.
+/// screen, which sends photos only when the user taps Send. "Ask us to find it" (screens/wanted.dart) sends only the
+/// barcode number, and only after the user chose that.
 library;
 
 import 'dart:io';
@@ -20,6 +21,7 @@ import 'ingredient.dart' show openLink;
 import 'no_list.dart';
 import 'result.dart';
 import 'review.dart';
+import 'wanted.dart';
 
 enum ScanMode { barcode, list }
 
@@ -40,6 +42,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
   (String, String)? _maker; // the maker's ingredient page for the barcode in the notice, opened only on tap
   String? _barcode; // carried into the photo step when a barcode had no ingredient list
   String? _name;
+  bool _missed = false; // the notice is a not-found one: show the three choices
   bool _torch = false;
   bool _covered = false; // the "Add it" screen is on top and may be using the camera
 
@@ -126,6 +129,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
       _mode = m;
       _notice = null;
       _maker = null;
+      _missed = false;
     });
     _startMode();
   }
@@ -168,13 +172,12 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
         _busy = null;
         _barcode = code;
         _name = p?.name.isNotEmpty == true ? p!.name : null;
+        _missed = true;
         _notice = p == null
-            ? 'Barcode $code isn’t in Open Beauty Facts, Open Products Facts, the FDA’s drug labels, or ours. '
-                'Photograph the ingredient list instead.'
+            ? 'Barcode $code isn’t in Open Beauty Facts, Open Products Facts, the FDA’s drug labels, or ours.'
             : p.source == 'fda'
-                ? 'The FDA drug label for ${p.name.isEmpty ? 'this product' : p.name} has no inactive ingredient list. '
-                    'Photograph the list instead.'
-                : '${p.sourceName} knows ${p.name.isEmpty ? 'this product' : p.name}, but not its ingredients. Photograph the list instead.';
+                ? 'The FDA drug label for ${p.name.isEmpty ? 'this product' : p.name} has no inactive ingredient list.'
+                : '${p.sourceName} knows ${p.name.isEmpty ? 'this product' : p.name}, but not its ingredients.';
         _maker = makerPage(code);
         _mode = ScanMode.list;
       });
@@ -184,6 +187,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
       if (!mounted) return;
       setState(() {
         _busy = null;
+        _missed = false;
         _notice = '${e.message} Or photograph the ingredient list: that works offline.';
       });
       _handling = false;
@@ -264,6 +268,16 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
       return;
     }
     _openReview(cleanOcr(text), ReviewKind.photo);
+  }
+
+  /// "Photograph the ingredients": the camera is already on the list; clear the notice off the frame.
+  void _photographIt() {
+    setState(() {
+      _notice = null;
+      _maker = null;
+      _missed = false;
+    });
+    if (_mode != ScanMode.list) _switch(ScanMode.list);
   }
 
   /// "Add it": send us this product. The camera is let go first, so the photo step can use it.
@@ -438,8 +452,28 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                   color: C.label, border: Border(left: BorderSide(color: C.signal, width: 6))),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(_notice!, style: T.lede.copyWith(fontSize: 14)),
+                if (_missed && _barcode != null) ...[
+                  InkWell(
+                    onTap: _busy == null ? _photographIt : null,
+                    child: const Padding(
+                      padding: EdgeInsets.only(top: 8, bottom: 2),
+                      child: MonoLink('Photograph the ingredients', icon: Icons.arrow_forward, size: 11),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: _busy == null ? _addIt : null,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        const MonoLink('Add it for everyone', icon: Icons.arrow_forward, size: 11),
+                        Text('Fastest way to get it added', style: T.src(size: 11)),
+                      ]),
+                    ),
+                  ),
+                  AskToFind(key: ValueKey(_barcode), barcode: _barcode!, name: _name),
+                ],
                 Wrap(spacing: 18, children: [
-                  if (_barcode != null)
+                  if (_barcode != null && !_missed)
                     InkWell(
                       onTap: _busy == null ? _addIt : null,
                       child: const Padding(

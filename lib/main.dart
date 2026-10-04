@@ -14,6 +14,7 @@ import 'screens/my_list.dart';
 import 'screens/search.dart';
 import 'services.dart';
 import 'theme.dart';
+import 'wanted.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +26,7 @@ void main() {
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const App());
   scheduleDataUpdateCheck(); // a few seconds after the app is up, at most once a day
+  scheduleWantedCheck(); // the barcodes the user asked us to find, if any: at most once a day
 }
 
 class App extends StatefulWidget {
