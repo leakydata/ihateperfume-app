@@ -16,7 +16,7 @@ class Find {
   final String? says; // 'fragrance-free', 'unscented', 'no scent listed', 'scented'
   final String? note;
   final String checked; // '2026-10'
-  final String evidence; // 'package photo' or 'maker site'
+  final String evidence; // 'package photo', 'retailer photo', or 'maker site'
   final String? barcode;
   const Find(
       {required this.name,
@@ -31,7 +31,12 @@ class Find {
   /// "Checked Oct 2026 · package photo"
   String get checkedLine => [
         if (checked.isNotEmpty) 'Checked ${monthYear(checked)}',
-        if (evidence.isNotEmpty) evidence == 'maker site' ? 'maker’s site' : evidence,
+        if (evidence.isNotEmpty)
+          switch (evidence) {
+            'maker site' => 'maker’s site',
+            'retailer photo' => 'retailer’s photo',
+            _ => evidence,
+          },
       ].join(' · ');
 }
 

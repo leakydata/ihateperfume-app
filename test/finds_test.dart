@@ -108,7 +108,9 @@ void main() {
       expect(saysTag(null), isNull);
       expect(monthYear('2026-10'), 'Oct 2026');
       expect(monthYear('soon'), 'soon');
-      expect(ihpNote(null), 'Reviewed by I Hate Perfume from a package photo or the maker’s site.');
+      expect(ihpNote(null), 'Reviewed by I Hate Perfume from a package photo, a retailer’s photo, or the maker’s site.');
+      expect(ihpNote(const IhpInfo(checked: '2026-10', evidence: 'retailer photo')),
+          'Reviewed by I Hate Perfume from a retailer’s photo of the package (Oct 2026).');
     });
   });
 

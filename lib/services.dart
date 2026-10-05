@@ -476,7 +476,7 @@ const ihpApi = 'https://ihateperfume.com/wp-json/ihp-app/v1';
 class IhpInfo {
   final String? says; // 'fragrance-free', 'unscented', 'no scent listed', 'scented', or null
   final String checked; // '2026-10'
-  final String evidence; // 'package photo' or 'maker site'
+  final String evidence; // 'package photo', 'retailer photo', or 'maker site'
   final bool noList;
   const IhpInfo({this.says, this.checked = '', this.evidence = '', this.noList = false});
 
@@ -528,8 +528,9 @@ String monthYear(String ym) {
 String ihpNote(IhpInfo? i) {
   final from = switch (i?.evidence) {
     'package photo' => 'a package photo',
+    'retailer photo' => 'a retailer’s photo of the package',
     'maker site' => 'the maker’s site',
-    _ => 'a package photo or the maker’s site',
+    _ => 'a package photo, a retailer’s photo, or the maker’s site',
   };
   final when = i == null || i.checked.isEmpty ? '' : ' (${monthYear(i.checked)})';
   return 'Reviewed by I Hate Perfume from $from$when.';

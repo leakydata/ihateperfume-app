@@ -38,7 +38,7 @@ Our own reviewed products (after Open Beauty Facts, Open Products Facts, and ope
 ```json
 {"barcode": "0123456789012", "name": "Brand Product", "ingredients": "Water, …" | null,
  "no_list": false, "says": "fragrance-free" | "unscented" | "no scent listed" | "scented" | null,
- "checked": "2026-10", "evidence": "package photo" | "maker site"}
+ "checked": "2026-10", "evidence": "package photo" | "retailer photo" | "maker site"}
 ```
 `ingredients` is null for products with no ingredient list (then `no_list` is true).
 
@@ -50,7 +50,7 @@ Fragrance-free finds: reviewed products that have no ingredient list (trash bags
  "items": [{"name": "…", "brand": "…", "category": "Trash bags",
             "says": "unscented" | "fragrance-free" | "no scent listed" | "scented",
             "note": "Says “fresh scent” on the box" | null,
-            "checked": "2026-10", "evidence": "package photo" | "maker site", "barcode": "…" | null}]}
+            "checked": "2026-10", "evidence": "package photo" | "retailer photo" | "maker site", "barcode": "…" | null}]}
 ```
 Only reviewed entries appear. Never "safe"; "scented" entries are listed too, as warnings.
 
