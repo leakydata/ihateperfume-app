@@ -1,0 +1,24 @@
+name: Missing or wrong product
+description: A barcode wasn't found, or the ingredient list shown doesn't match your package.
+labels: [product]
+body:
+  - type: markdown
+    attributes:
+      value: The fastest fix is in the app. When a barcode isn't found, tap **Add it** and photograph the front and the ingredient list. For a wrong list, tap **Report it** under the list. Use this form if you can't.
+  - type: input
+    id: barcode
+    attributes:
+      label: Barcode
+      description: The digits under the barcode.
+    validations:
+      required: true
+  - type: input
+    id: name
+    attributes:
+      label: Product name
+      placeholder: Brand and product, e.g. Seventh Generation Free & Clear Laundry Detergent
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What's missing or wrong?
+      description: Please don't post photos that show your address or other personal details.

@@ -1,0 +1,27 @@
+name: Bug report
+description: Something in the app didn't work the way you expected.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what the app did instead. Screenshots help (crop out anything personal).
+    validations:
+      required: true
+  - type: input
+    id: phone
+    attributes:
+      label: Phone model
+      placeholder: e.g. Pixel 8, Galaxy A54
+  - type: input
+    id: android
+    attributes:
+      label: Android version
+      description: Settings > About phone > Android version
+      placeholder: e.g. 15
+  - type: input
+    id: app
+    attributes:
+      label: App version
+      description: The release you installed, e.g. 1.0.0-beta.1

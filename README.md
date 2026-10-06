@@ -7,6 +7,13 @@ fragrance-free products that have no ingredient list at all (trash bags, laundry
 Companion to [ihateperfume.com](https://ihateperfume.com) (repo: leakydata/ihateperfume), which publishes the
 ingredient data and reviews submitted products.
 
+## Test the beta
+Android 7.0 or newer. Download the APK from [Releases](https://github.com/leakydata/ihateperfume-app/releases)
+(install steps and what works so far: [ihateperfume.com/app/](https://ihateperfume.com/app/)). To update, install
+the newer APK over the old one; your list and recent scans stay. Found a bug or a missing product?
+[Open an issue](https://github.com/leakydata/ihateperfume-app/issues/new/choose), or use
+[the contact page](https://ihateperfume.com/contact/) if you don't have a GitHub account. No iPhone version yet.
+
 ## Promises
 - No account, no ads, no tracking. Free.
 - Barcode reading, text recognition, and ingredient matching run on the phone. Photos leave the phone only when
