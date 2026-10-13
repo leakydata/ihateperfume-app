@@ -117,6 +117,18 @@ phone's last update).
 same origin. Keep it public and its item shape stable (`barcode`, `name`, `ingredients`, `no_list`, `says`, `checked`,
 `evidence`), or tell the website session before changing it.
 
+## `POST /corrections` ("Suggest a correction")
+Sent only when the user fills in and sends the correction sheet. `application/x-www-form-urlencoded`, body only:
+`barcode` (required, 8–14 digits), `source` (required: `obf` | `opf` | `fda` | `ihp`, whose listing the user saw),
+`message` (required, 1–1000 chars, multiline: "What's wrong?"), optional `ingredients` (≤ 20000, the correct list as
+printed), `name` (≤ 120), `brand` (≤ 80), `says` ('' or a `says` value), `app` (`[0-9A-Za-z.+-]{1,32}`). Nothing else:
+no photos, no device data. Responses: `201 {"ok": true, "ref": "C-XXXXX"}`, `400 {"ok": false, "error": "…"}`,
+`429` (10 per IP hash per day, same daily-salted HMAC buckets; IPs never stored), `503` when 300+ are pending.
+Server: a pending `ihp_app_submission` with `kind=correction`; wp-admin Pending shows it with a Now vs Suggested
+table; Approve saves our product (clearing that barcode's reports and wanted entries), which then flows out through
+`products.json`. The app sheet tells users not to include personal details, and ships only after the owner approves
+the matching `/app-privacy/` line (the website form stays off until then).
+
 ## `POST /reports` ("Wrong or missing ingredients? Report it")
 Sent only when the user taps "Just report" in the report sheet. `application/x-www-form-urlencoded`: `barcode`
 (8–14 digits), `source` (`obf` | `opf` | `fda` | `ihp`), `reason` (`not_ingredients` | `wrong_product` |
