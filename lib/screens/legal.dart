@@ -185,6 +185,11 @@ const privacyDoc = LegalDoc('Privacy policy', _updated, [
     Li('Reports. Only if you tap “Just report.” The app sends the barcode, where its ingredient list came from, and '
         'the reason you picked. Nothing else: no text you type, no account, and no location. We delete a report once '
         'we’ve handled it, and we limit how many can be sent each day the same way we do for products you send us.'),
+    Li('Corrections. Only if you tap “Suggest a correction” and send it. The app sends the barcode, where its '
+        'ingredient list came from, what you typed about what’s wrong, and any corrected name or ingredient list you '
+        'add. Nothing else: no account, no photos, and no location. Please don’t include personal details. We delete '
+        'a correction once we’ve reviewed it. If we accept it, the corrected product details are published. We limit '
+        'how many can be sent each day the same way we do for products you send us.'),
     Li('Maker links. After a barcode scan, the app shows a link to the maker’s own ingredient page (for P&G '
         'products) or to SmartLabel’s product search (smartlabel.org, run by the Consumer Brands Association). '
         'Opening it sends the barcode to that website, and only when you tap the link. The app never contacts '
